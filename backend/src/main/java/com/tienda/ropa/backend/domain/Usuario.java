@@ -2,7 +2,7 @@ package com.tienda.ropa.backend.domain;
 
 
 import jakarta.persistence.*;
-
+//Usuario
 
 @Entity
 @Table(name = "usuarios")
