@@ -85,7 +85,7 @@ export default function Cart() {
                     ))}
                 </div>
 
-                {/* Resumen */}
+                {/*Resume*/}
                 <div className="order-summary">
                     <h3>Resumen del pedido</h3>
 
