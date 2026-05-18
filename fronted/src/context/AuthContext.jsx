@@ -1,44 +1,40 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useCallback } from 'react';
+import { api } from '../services/api';
 
-const AuthContext = createContext();
-
+const AuthContext = createContext(null);
 export const useAuth = () => useContext(AuthContext);
 
-export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(() => {
-    const saved = localStorage.getItem('user');
-    return saved ? JSON.parse(saved) : null;
-  });
-
-  const login = async (nombre, contrasena) => {
-    const response = await fetch('/api/auth/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ nombre, contrasena })
+export function AuthProvider({ children }) {
+    const [user, setUser] = useState(() => {
+        try {
+            const stored = localStorage.getItem('nova_user');
+            return stored ? JSON.parse(stored) : null;
+        } catch {
+            return null;
+        }
     });
 
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Error al iniciar sesión');
-    }
+    const login = useCallback(async (nombre, contrasena) => {
+        // POST /api/auth/login — backend espera { nombre, contrasena }
+        const userData = await api.auth.login(nombre, contrasena);
+        setUser(userData);
+        localStorage.setItem('nova_user', JSON.stringify(userData));
+        return userData;
+    }, []);
 
-    const userData = await response.json();
-    setUser(userData);
-    localStorage.setItem('user', JSON.stringify(userData));
-    return userData;
-  };
+    const logout = useCallback(() => {
+        setUser(null);
+        localStorage.removeItem('nova_user');
+    }, []);
 
-  const logout = () => {
-    setUser(null);
-    localStorage.removeItem('user');
-  };
+    // Backend usa roles: ADMIN | CLIENTE
+    const isAdmin   = user?.rol === 'ADMIN';
+    const isCliente = user?.rol === 'CLIENTE';
+    const isLoggedIn = !!user;
 
-  const isAdmin = user?.rol === 'ADMIN';
-  const isLoggedIn = !!user;
-
-  return (
-    <AuthContext.Provider value={{ user, login, logout, isAdmin, isLoggedIn }}>
-      {children}
-    </AuthContext.Provider>
-  );
-};
+    return (
+        <AuthContext.Provider value={{ user, login, logout, isAdmin, isCliente, isLoggedIn }}>
+            {children}
+        </AuthContext.Provider>
+    );
+}

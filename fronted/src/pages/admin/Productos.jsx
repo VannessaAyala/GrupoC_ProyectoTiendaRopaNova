@@ -1,156 +1,186 @@
 import React, { useState, useEffect } from 'react';
-import { api } from '../../services/api';
+import { api, fmt } from '../../services/api';
+import { useToast } from '../../context/ToastContext';
+
+const emptyForm = { nombre: '', precio: '', stock: '', categoriaId: '' };
 
 export default function Productos() {
-  const [productos, setProductos] = useState([]);
-  const [categorias, setCategorias] = useState([]);
-  const [editingId, setEditingId] = useState(null);
-  
-  const [form, setForm] = useState({
-    nombre: '',
-    precio: '',
-    stock: '',
-    idCategoria: ''
-  });
+    const [productos,   setProductos]   = useState([]);
+    const [categorias,  setCategorias]  = useState([]);
+    const [loading,     setLoading]     = useState(true);
+    const [form,        setForm]        = useState(emptyForm);
+    const [editingId,   setEditingId]   = useState(null);
+    const [saving,      setSaving]      = useState(false);
+    const { toast } = useToast();
 
-  useEffect(() => {
-    loadData();
-  }, []);
+    useEffect(() => { load(); }, []);
 
-  const loadData = () => {
-    api.productos.getAll().then(setProductos);
-    api.categorias.getAll().then(setCategorias);
-  };
-
-  const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    const payload = {
-      nombre: form.nombre,
-      precio: parseFloat(form.precio),
-      stock: parseInt(form.stock),
-      categoriaId: parseInt(form.idCategoria)
+    const load = () => {
+        Promise.all([api.productos.getAll(), api.categorias.getAll()])
+            .then(([p, c]) => { setProductos(p); setCategorias(c); })
+            .catch(() => toast('Error cargando datos', 'error'))
+            .finally(() => setLoading(false));
     };
 
-    try {
-      if (editingId) {
-        await api.productos.update(editingId, payload);
-      } else {
-        await api.productos.create(payload);
-      }
-      setForm({ nombre: '', precio: '', stock: '', idCategoria: '' });
-      setEditingId(null);
-      loadData();
-    } catch (err) {
-      alert("Error al guardar el producto. Verifica que todos los campos sean válidos.");
-    }
-  };
+    const reset = () => { setForm(emptyForm); setEditingId(null); };
 
-  const handleEdit = (p) => {
-    setEditingId(p.id);
-    // El backend devuelve "categoria" como nombre (string), buscamos el ID correspondiente
-    const cat = categorias.find(c => c.nombre === p.categoria);
-    setForm({
-      nombre: p.nombre,
-      precio: p.precio,
-      stock: p.stock,
-      idCategoria: cat ? cat.id : ''
-    });
-  };
+    const handleChange = e => setForm(f => ({ ...f, [e.target.name]: e.target.value }));
 
-  const handleToggleEstado = async (id, currentActive) => {
-    try {
-      if (currentActive) {
-        // Desactivar: usa el endpoint PATCH /deactivate
-        await api.productos.deactivate(id);
-      } else {
-        // Reactivar: usa el endpoint PUT con active: true
-        await api.productos.update(id, { active: true });
-      }
-      loadData();
-    } catch (e) {
-      alert("Error al cambiar el estado");
-    }
-  };
+    const handleEdit = (p) => {
+        const cat = categorias.find(c => c.nombre === p.categoria);
+        setEditingId(p.id);
+        setForm({
+            nombre:      p.nombre,
+            precio:      p.precio,
+            stock:       p.stock,
+            categoriaId: cat ? cat.id : '',
+        });
+    };
 
-  return (
-    <div>
-      <div className="page-header">
-        <h2>Gestión de Productos</h2>
-      </div>
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setSaving(true);
+        try {
+            // ProductoCreateRequest / ProductoUpdateRequest del backend
+            const payload = {
+                nombre:      form.nombre,
+                precio:      parseFloat(form.precio),
+                stock:       parseInt(form.stock),
+                categoriaId: parseInt(form.categoriaId),
+            };
+            if (editingId) {
+                await api.productos.update(editingId, payload);
+                toast('Producto actualizado', 'success');
+            } else {
+                await api.productos.create(payload);
+                toast('Producto creado', 'success');
+            }
+            reset();
+            load();
+        } catch (err) {
+            toast(err.message || 'Error al guardar', 'error');
+        } finally {
+            setSaving(false);
+        }
+    };
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '2rem' }}>
-        <div className="cart-summary">
-          <h3>{editingId ? 'Editar' : 'Nuevo'} Producto</h3>
-          <form onSubmit={handleSubmit}>
-            <div className="form-group">
-              <label>Categoría</label>
-              <select className="form-control" name="idCategoria" value={form.idCategoria} onChange={handleChange} required>
-                <option value="">-- Seleccionar --</option>
-                {categorias.map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}
-              </select>
+    const handleToggle = async (p) => {
+        try {
+            if (p.active) {
+                // PATCH /productos/{id}/deactivate
+                await api.productos.deactivate(p.id);
+                toast(`"${p.nombre}" desactivado`, 'success');
+            } else {
+                // PUT con active: true para reactivar
+                await api.productos.update(p.id, { active: true });
+                toast(`"${p.nombre}" activado`, 'success');
+            }
+            load();
+        } catch (err) {
+            toast(err.message || 'Error', 'error');
+        }
+    };
+
+    return (
+        <>
+            <div className="admin-page-header">
+                <div>
+                    <h2>Productos</h2>
+                    <p>Gestiona el catálogo de la tienda</p>
+                </div>
+                <span className="badge badge-neutral">{productos.length} total</span>
             </div>
-            <div className="form-group">
-              <label>Nombre</label>
-              <input className="form-control" name="nombre" value={form.nombre} onChange={handleChange} required />
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-              <div className="form-group">
-                <label>Precio ($)</label>
-                <input className="form-control" type="number" step="0.01" name="precio" value={form.precio} onChange={handleChange} required />
-              </div>
-              <div className="form-group">
-                <label>Stock</label>
-                <input className="form-control" type="number" name="stock" value={form.stock} onChange={handleChange} required />
-              </div>
-            </div>
-            
-            <div style={{ display: 'flex', gap: '1rem' }}>
-              <button type="submit" className="btn" style={{ flex: 1 }}>Guardar</button>
-              {editingId && (
-                <button type="button" className="btn btn-outline" onClick={() => { setEditingId(null); setForm({ nombre: '', precio: '', stock: '', idCategoria: '' }); }}>Cancelar</button>
-              )}
-            </div>
-          </form>
-        </div>
 
-        <div>
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>Nombre</th>
-                <th>Precio / Stock</th>
-                <th>Estado</th>
-                <th>Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              {productos.map(p => (
-                <tr key={p.id}>
-                  <td>{p.id}</td>
-                  <td><strong>{p.nombre}</strong></td>
-                  <td>${p.precio} / {p.stock} u.</td>
-                  <td>
-                    <span className={`status-badge ${!p.active ? 'inactive' : ''}`}>
-                      {p.active ? 'Disponible' : 'Agotado'}
-                    </span>
-                  </td>
-                  <td>
-                    <div className="action-buttons">
-                      <button className="btn" style={{ padding: '0.25rem 0.5rem' }} onClick={() => handleEdit(p)}>Editar</button>
-                      <button className={`btn ${p.active ? 'btn-danger' : 'btn-outline'}`} style={{ padding: '0.25rem 0.5rem' }} onClick={() => handleToggleEstado(p.id, p.active)}>
-                        {p.active ? 'Desactivar' : 'Activar'}
-                      </button>
+            <div className="admin-split">
+                {/* Formulario */}
+                <div className="form-panel">
+                    <div className="form-panel-header">
+                        {editingId ? '✏ Editar producto' : '+ Nuevo producto'}
                     </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-  );
+                    <div className="form-panel-body">
+                        <form onSubmit={handleSubmit}>
+                            <div className="form-group">
+                                <label>Categoría</label>
+                                <select className="form-control" name="categoriaId" value={form.categoriaId} onChange={handleChange} required>
+                                    <option value="">-- Seleccionar --</option>
+                                    {categorias.map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}
+                                </select>
+                            </div>
+                            <div className="form-group">
+                                <label>Nombre</label>
+                                <input className="form-control" name="nombre" value={form.nombre} onChange={handleChange} required minLength={3} maxLength={100} />
+                            </div>
+                            <div className="form-row">
+                                <div className="form-group">
+                                    <label>Precio ($)</label>
+                                    <input className="form-control" type="number" step="0.01" min="0.01" name="precio" value={form.precio} onChange={handleChange} required />
+                                </div>
+                                <div className="form-group">
+                                    <label>Stock</label>
+                                    <input className="form-control" type="number" min="0" name="stock" value={form.stock} onChange={handleChange} required />
+                                </div>
+                            </div>
+                            <div className="action-bar">
+                                <button type="submit" className="btn btn-accent" disabled={saving}>
+                                    {saving ? 'Guardando...' : 'Guardar'}
+                                </button>
+                                {editingId && <button type="button" className="btn btn-outline" onClick={reset}>Cancelar</button>}
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                {/* Tabla */}
+                {loading ? (
+                    <div className="loading-center"><div className="loading-ring" /></div>
+                ) : (
+                    <div className="table-wrap">
+                        <table className="data-table">
+                            <thead>
+                            <tr>
+                                <th>Producto</th>
+                                <th>Precio / Stock</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            {productos.map(p => (
+                                <tr key={p.id}>
+                                    <td>
+                                        <strong>{p.nombre}</strong>
+                                        <div style={{ fontSize: '0.75rem', color: 'var(--muted)' }}>{p.categoria}</div>
+                                    </td>
+                                    <td>
+                                        <strong>{fmt.price(p.precio)}</strong>
+                                        <div style={{ fontSize: '0.75rem', color: 'var(--muted)' }}>{p.stock} u.</div>
+                                    </td>
+                                    <td>
+                      <span className={`badge ${p.active ? 'badge-success' : 'badge-danger'}`}>
+                        {p.active ? 'Activo' : 'Inactivo'}
+                      </span>
+                                    </td>
+                                    <td>
+                                        <div className="action-bar">
+                                            <button className="btn btn-sm btn-outline" onClick={() => handleEdit(p)}>Editar</button>
+                                            <button
+                                                className={`btn btn-sm ${p.active ? 'btn-danger' : 'btn-success'}`}
+                                                onClick={() => handleToggle(p)}
+                                            >
+                                                {p.active ? 'Desactivar' : 'Activar'}
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ))}
+                            {productos.length === 0 && (
+                                <tr><td colSpan={4} style={{ textAlign: 'center', color: 'var(--muted)', padding: '2rem' }}>Sin productos</td></tr>
+                            )}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+            </div>
+        </>
+    );
 }

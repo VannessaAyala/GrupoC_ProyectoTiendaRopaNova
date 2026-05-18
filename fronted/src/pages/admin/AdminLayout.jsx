@@ -1,23 +1,35 @@
 import React from 'react';
-import { Outlet, Link, useLocation } from 'react-router-dom';
+import { Outlet, NavLink } from 'react-router-dom';
+
+const LINKS = [
+    { to: '/admin/productos',  icon: '👕', label: 'Productos'   },
+    { to: '/admin/categorias', icon: '🏷',  label: 'Categorías'  },
+    { to: '/admin/usuarios',   icon: '👤', label: 'Usuarios'    },
+    { to: '/admin/pedidos',    icon: '📦', label: 'Pedidos'     },
+];
 
 export default function AdminLayout() {
-  const location = useLocation();
-  const path = location.pathname;
+    return (
+        <div className="admin-shell">
+            <aside className="admin-sidebar">
+                <div className="sidebar-section">
+                    <div className="sidebar-label">Panel de control</div>
+                    {LINKS.map(l => (
+                        <NavLink
+                            key={l.to}
+                            to={l.to}
+                            className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
+                        >
+                            <span>{l.icon}</span>
+                            {l.label}
+                        </NavLink>
+                    ))}
+                </div>
+            </aside>
 
-  return (
-    <div className="admin-layout">
-      <aside className="admin-sidebar">
-        <h3 style={{ marginBottom: '2rem', paddingLeft: '1rem', color: 'var(--text-muted)' }}>Administración</h3>
-        <Link to="/admin/categorias" className={path.includes('categorias') ? 'active' : ''}>Categorías</Link>
-        <Link to="/admin/productos" className={path.includes('productos') ? 'active' : ''}>Productos</Link>
-        <Link to="/admin/usuarios" className={path.includes('usuarios') ? 'active' : ''}>Usuarios</Link>
-        <Link to="/admin/pedidos" className={path.includes('pedidos') ? 'active' : ''}>Pedidos</Link>
-      </aside>
-      
-      <main className="admin-content">
-        <Outlet />
-      </main>
-    </div>
-  );
+            <main className="admin-content">
+                <Outlet />
+            </main>
+        </div>
+    );
 }

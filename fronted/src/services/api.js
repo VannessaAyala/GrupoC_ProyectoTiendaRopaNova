@@ -1,55 +1,103 @@
-const BASE_URL = '/api';
+/**
+ * api.js — Capa de comunicación con el backend Spring Boot
+ *
+ * Base URL: /api  (Vite proxy → http://localhost:8080 en dev)
+ * En producción el frontend se sirve desde el mismo origen en Render.
+ *
+ * Roles del backend: ADMIN | CLIENTE
+ * Login: POST /api/auth/login { nombre, contrasena }
+ */
 
-const request = async (url, options = {}) => {
-  const response = await fetch(`${BASE_URL}${url}`, {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    },
-  });
-  if (!response.ok) {
-    throw new Error(`API Error: ${response.statusText}`);
-  }
-  if (response.status === 204) return null;
-  return response.json();
-};
+const BASE = '/api';
+
+async function request(path, options = {}) {
+    const res = await fetch(`${BASE}${path}`, {
+        ...options,
+        headers: {
+            'Content-Type': 'application/json',
+            ...(options.headers || {}),
+        },
+    });
+
+    if (res.status === 204) return null;
+
+    const data = await res.json();
+
+    if (!res.ok) {
+        // El GlobalExceptionHandler del backend devuelve { message, status, error }
+        const msg = data?.message || data?.error || `Error ${res.status}`;
+        throw new Error(msg);
+    }
+
+    return data;
+}
+
+const get  = (path)        => request(path);
+const post = (path, body)  => request(path, { method: 'POST',  body: JSON.stringify(body) });
+const put  = (path, body)  => request(path, { method: 'PUT',   body: JSON.stringify(body) });
+const patch = (path, body) => request(path, { method: 'PATCH', body: body ? JSON.stringify(body) : undefined });
+const del  = (path)        => request(path, { method: 'DELETE' });
 
 export const api = {
-  // Auth
-  auth: {
-    login: (correo, contrasena) => request('/auth/login', { method: 'POST', body: JSON.stringify({ correo, contrasena }) }),
-  },
-  // Productos
-  productos: {
-    getAll: () => request('/productos'),
-    getById: (id) => request(`/productos/${id}`),
-    create: (data) => request('/productos', { method: 'POST', body: JSON.stringify(data) }),
-    update: (id, data) => request(`/productos/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
-    deactivate: (id) => request(`/productos/${id}/deactivate`, { method: 'PATCH' }),
-  },
-  // Categorias
-  categorias: {
-    getAll: () => request('/categorias'),
-    getById: (id) => request(`/categorias/${id}`),
-    create: (data) => request('/categorias', { method: 'POST', body: JSON.stringify(data) }),
-    update: (id, data) => request(`/categorias/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
-    delete: (id) => request(`/categorias/${id}`, { method: 'DELETE' }),
-  },
-  // Usuarios
-  usuarios: {
-    getAll: () => request('/usuarios'),
-    getById: (id) => request(`/usuarios/${id}`),
-    create: (data) => request('/usuarios', { method: 'POST', body: JSON.stringify(data) }),
-    update: (id, data) => request(`/usuarios/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
-    deactivate: (id) => request(`/usuarios/${id}/deactivate`, { method: 'PATCH' }),
-  },
-  // Pedidos
-  pedidos: {
-    getAll: () => request('/pedidos'),
-    getById: (id) => request(`/pedidos/${id}`),
-    create: (data) => request('/pedidos', { method: 'POST', body: JSON.stringify(data) }),
-    updateEstado: (id, estado) => request(`/pedidos/${id}/estado`, { method: 'PATCH', body: JSON.stringify({ estado }) }),
-  }
+    // ── Auth ──────────────────────────────────────────────────────────
+    auth: {
+        // Backend espera: { nombre, contrasena }
+        login: (nombre, contrasena) => post('/auth/login', { nombre, contrasena }),
+    },
+
+    // ── Categorías ────────────────────────────────────────────────────
+    categorias: {
+        getAll:       ()          => get('/categorias'),
+        getById:      (id)        => get(`/categorias/${id}`),
+        create:       (data)      => post('/categorias', data),      // { nombre }
+        update:       (id, data)  => put(`/categorias/${id}`, data), // { nombre }
+        delete:       (id)        => del(`/categorias/${id}`),
+    },
+
+    // ── Productos ─────────────────────────────────────────────────────
+    productos: {
+        getAll:       ()                 => get('/productos'),
+        getById:      (id)               => get(`/productos/${id}`),
+        search:       (name, page = 0, size = 12) =>
+            get(`/productos/search?name=${encodeURIComponent(name)}&page=${page}&size=${size}`),
+        create:       (data)             => post('/productos', data),
+        // data: { nombre, precio, stock, categoriaId, active? }
+        update:       (id, data)         => put(`/productos/${id}`, data),
+        deactivate:   (id)               => patch(`/productos/${id}/deactivate`),
+    },
+
+    // ── Usuarios ──────────────────────────────────────────────────────
+    usuarios: {
+        getAll:       ()          => get('/usuarios'),
+        getById:      (id)        => get(`/usuarios/${id}`),
+        search:       (name, page = 0, size = 20) =>
+            get(`/usuarios/search?name=${encodeURIComponent(name)}&page=${page}&size=${size}`),
+        // create: { nombre, correo, contrasena, rol }  → rol debe ser ADMIN o CLIENTE
+        create:       (data)      => post('/usuarios', data),
+        update:       (id, data)  => put(`/usuarios/${id}`, data),
+        deactivate:   (id)        => patch(`/usuarios/${id}/deactivate`),
+    },
+
+    // ── Pedidos ───────────────────────────────────────────────────────
+    pedidos: {
+        getAll:       ()          => get('/pedidos'),
+        getById:      (id)        => get(`/pedidos/${id}`),
+        // create: { idUsuario, productos: [{ idProducto, cantidad }] }
+        create:       (data)      => post('/pedidos', data),
+        // estados válidos: PENDIENTE | APROBADO | RECHAZADO | ENVIADO | ENTREGADO
+        updateEstado: (id, estado) => patch(`/pedidos/${id}/estado`, { estado }),
+    },
 };
 
+// ── Helpers de formato ────────────────────────────────────────────────────
+export const fmt = {
+    price:  (n)   => `$${parseFloat(n || 0).toFixed(2)}`,
+    date:   (d)   => d ? new Date(d).toLocaleDateString('es-EC', { day: '2-digit', month: 'short', year: 'numeric' }) : '—',
+    estado: (e)   => ({
+        PENDIENTE:  { label: 'Pendiente',  cls: 'badge-warning' },
+        APROBADO:   { label: 'Aprobado',   cls: 'badge-success' },
+        RECHAZADO:  { label: 'Rechazado',  cls: 'badge-danger'  },
+        ENVIADO:    { label: 'Enviado',    cls: 'badge-info'    },
+        ENTREGADO:  { label: 'Entregado',  cls: 'badge-neutral' },
+    }[e] || { label: e, cls: 'badge-neutral' }),
+};
