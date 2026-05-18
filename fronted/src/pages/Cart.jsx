@@ -114,7 +114,7 @@ export default function Cart() {
                     </button>
 
                     <p className="summary-note">
-                        El estado del pedido será actualizado por el administrador.
+                        El estado del pedido será actualizado por el administrador
                     </p>
                 </div>
             </div>
