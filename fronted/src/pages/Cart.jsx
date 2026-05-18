@@ -40,7 +40,7 @@ export default function Cart() {
                 <div className="empty-state" style={{ maxWidth: 480, margin: '4rem auto' }}>
                     <div className="empty-icon">🛍</div>
                     <h3>Tu carrito está vacío</h3>
-                    <p>Explora el catálogo y elige tus prendas favoritas.</p>
+                    <p>Explora el catálogo y elige tus prendas favoritas</p>
                     <Link to="/" className="btn btn-accent" style={{ marginTop: '1.5rem' }}>
                         Ver Tienda
                     </Link>
