@@ -1,13 +1,3 @@
-# ─────────────────────────────────────────────────────────────────────────────
-# CD – Despliegue Continuo a Render
-#
-# Solo se ejecuta si el job de CI ("CI – Build & Test") pasó con éxito.
-# Inyecta APP_VERSION con número de run + commit hash.
-# Si el deploy falla, llama automáticamente al workflow de rollback.
-#
-# Secrets requeridos:
-#   RENDER_DEPLOY_HOOK  → URL del deploy hook (Render → Settings → Deploy Hook)
-# ─────────────────────────────────────────────────────────────────────────────
 name: CD – Deploy a Render
 
 on:
@@ -16,6 +6,10 @@ on:
     types:
       - completed
     branches: [ "main" ]
+
+permissions:
+  contents: read
+  actions: write
 
 jobs:
   deploy:
@@ -33,13 +27,16 @@ jobs:
       - name: Trigger Deploy Hook en Render
         id: deploy
         run: |
-          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" \
+          HTTP_CODE=$(curl -L -s -o /dev/null -w "%{http_code}" \
             -X GET "${{ secrets.RENDER_DEPLOY_HOOK }}")
+
           echo "HTTP Status: $HTTP_CODE"
+
           if [ "$HTTP_CODE" != "200" ] && [ "$HTTP_CODE" != "201" ]; then
             echo "Deploy hook respondio con HTTP $HTTP_CODE"
             exit 1
           fi
+
           echo "Deploy enviado exitosamente a Render"
 
       - name: Ejecutar rollback si el deploy fallo
