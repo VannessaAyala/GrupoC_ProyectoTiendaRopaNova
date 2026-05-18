@@ -33,32 +33,33 @@ tasks.named('test') {
     useJUnitPlatform()
 }
 
-// ── Frontend build ────────────────────────────────────────────────────────────
-
-// Windows usa "npm.cmd", Linux/Mac/Render usa "npm"
-def isWindows  = System.getProperty("os.name").toLowerCase().contains("windows")
-def npmCommand = isWindows ? "npm.cmd" : "npm"
-
-// Ruta al frontend: sube un nivel desde /backend hasta la raíz, luego /frontend
 def frontendDir = file("$rootDir/../fronted")
 
-// 1. npm install
 task npmInstall(type: Exec) {
     workingDir frontendDir
-    commandLine npmCommand, 'install'
+
+    if (System.getProperty("os.name").toLowerCase().contains("windows")) {
+        commandLine 'npm.cmd', 'install'
+    } else {
+        commandLine 'sh', '-c', 'npm install'
+    }
 }
 
-// 2. npm run build  (genera frontend/dist)
-task buildFrontend(type: Exec, dependsOn: npmInstall) {
+task buildFrontend(type: Exec) {
+    dependsOn npmInstall
     workingDir frontendDir
-    commandLine npmCommand, 'run', 'build'
+
+    if (System.getProperty("os.name").toLowerCase().contains("windows")) {
+        commandLine 'npm.cmd', 'run', 'build'
+    } else {
+        commandLine 'sh', '-c', 'npm run build'
+    }
 }
 
-// 3. Copiar dist → src/main/resources/static
-task copyFrontend(type: Copy, dependsOn: buildFrontend) {
+task copyFrontend(type: Copy) {
+    dependsOn buildFrontend
     from "$frontendDir/dist"
     into "$projectDir/src/main/resources/static"
 }
 
-// Enganchar antes de que Gradle procese los recursos Java
 processResources.dependsOn copyFrontend
