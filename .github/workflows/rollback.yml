@@ -1,20 +1,6 @@
-# ─────────────────────────────────────────────────────────────────────────────
-# ROLLBACK – Reversión automática del último deploy fallido en Render
-#
-# Actividad extra - Sección de preguntas del Laboratorio 2.
-#
-# Se puede disparar:
-#   a) Manualmente desde GitHub Actions (workflow_dispatch)
-#   b) Automáticamente si el CD falla (llamado desde cd.yml)
-#
-# Secrets requeridos:
-#   RENDER_API_KEY   → API Key de tu cuenta Render (Account Settings → API Keys)
-#   RENDER_SERVICE_ID → ID del servicio en Render (dashboard → Settings)
-# ─────────────────────────────────────────────────────────────────────────────
-name: Rollback – Revertir último deploy en Render
+name: Rollback - Revertir último deploy en Render
 
 on:
-  # Permite dispararlo manualmente desde la UI de GitHub Actions
   workflow_dispatch:
     inputs:
       motivo:
@@ -22,8 +8,13 @@ on:
         required: false
         default: 'Rollback manual solicitado'
 
-  # También puede ser llamado si el CD falla (ver cd.yml)s
   workflow_call:
+    inputs:
+      motivo:
+        description: 'Motivo del rollback'
+        required: false
+        type: string
+        default: 'Rollback automático desde CD'
 
 jobs:
   rollback:
@@ -36,7 +27,6 @@ jobs:
         run: |
           echo "Consultando deploys del servicio ${{ secrets.RENDER_SERVICE_ID }}..."
 
-          # Obtiene los últimos 10 deploys del servicio
           RESPONSE=$(curl -s --fail \
             -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}" \
             -H "Accept: application/json" \
@@ -45,7 +35,6 @@ jobs:
           echo "Respuesta de Render API:"
           echo "$RESPONSE" | python3 -m json.tool || echo "$RESPONSE"
 
-          # Extrae el ID del último deploy con status "live" (exitoso)
           LAST_LIVE_ID=$(echo "$RESPONSE" | python3 -c "
           import sys, json
           deploys = json.load(sys.stdin)

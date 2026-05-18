@@ -1,8 +1,8 @@
-name: CD – Deploy a Render
+name: CD - Deploy a Render
 
 on:
   workflow_run:
-    workflows: [ "CI – Build & Test" ]
+    workflows: [ "CI - Build & Test" ]
     types:
       - completed
     branches: [ "main" ]
@@ -33,7 +33,6 @@ jobs:
 
           echo "HTTP Status: $HTTP_CODE"
 
-          # Render puede responder 200, 202 o 204 dependiendo del hook
           if [ "$HTTP_CODE" != "200" ] && [ "$HTTP_CODE" != "201" ] && [ "$HTTP_CODE" != "202" ] && [ "$HTTP_CODE" != "204" ]; then
             echo "Deploy hook falló con HTTP $HTTP_CODE"
             exit 1
