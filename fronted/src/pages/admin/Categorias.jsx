@@ -76,7 +76,7 @@ export default function Categorias() {
                                     className="form-control"
                                     value={nombre}
                                     onChange={e => setNombre(e.target.value)}
-                                    placeholder="Ej: Camisas, Pantalones..."
+                                    placeholder="Ej: Camisas, pantalones..."
                                     required
                                     minLength={3}
                                     maxLength={100}
