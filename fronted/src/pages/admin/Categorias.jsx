@@ -116,7 +116,7 @@ export default function Categorias() {
                                         <td><strong>{c.nombre}</strong></td>
                                         <td>
                                             <div className="action-bar">
-                                                <button className="btn btn-sm btn-outline" onClick={() => { setEditingId(c.id); setNombre(c.nombre); }}>Editar</button>
+                                                <button className="btn btn-sm btn-outline" onClick={() => { setEditingId(c.id); setNombre(c.nombre); }}>Editar </button>
                                                 <button className="btn btn-sm btn-danger" onClick={() => handleDelete(c.id)}>Eliminar</button>
                                             </div>
                                         </td>
