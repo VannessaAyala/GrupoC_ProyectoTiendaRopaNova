@@ -8,6 +8,7 @@ import { ToastProvider }         from './context/ToastContext';
 import Navbar      from './components/Navbar';
 import Home        from './pages/Home';
 import Login       from './pages/Login';
+import Register    from './pages/Register';
 import Cart        from './pages/Cart';
 import MisPedidos  from './pages/MisPedidos';
 
@@ -47,6 +48,7 @@ function AppRoutes() {
                 {/* Públicas */}
                 <Route path="/"      element={<Home />} />
                 <Route path="/login" element={<Login />} />
+                <Route path="/register" element={<Register />} />
 
                 {/* Solo clientes */}
                 <Route path="/cart"        element={<ClienteRoute><Cart /></ClienteRoute>} />

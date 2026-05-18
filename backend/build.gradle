@@ -39,11 +39,11 @@ tasks.named('test') {
 |--------------------------------------------------------------------------
 */
 
-def frontendDir = file("$rootDir/fronted")
+def frontendDir = file("$projectDir/../fronted")
 def isWindows = System.getProperty("os.name").toLowerCase().contains("windows")
 
 task npmInstall(type: Exec) {
-    workingDir frontendDir
+    workingDir = frontendDir
 
     if (isWindows) {
         commandLine 'npm.cmd', 'install'
@@ -54,7 +54,7 @@ task npmInstall(type: Exec) {
 
 task buildFrontend(type: Exec) {
     dependsOn npmInstall
-    workingDir frontendDir
+    workingDir = frontendDir
 
     if (isWindows) {
         commandLine 'npm.cmd', 'run', 'build'

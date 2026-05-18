@@ -22,6 +22,12 @@ export function AuthProvider({ children }) {
         return userData;
     }, []);
 
+    const register = useCallback(async (data) => {
+        // data: { nombre, correo, contrasena, rol }
+        await api.usuarios.create(data);
+        return true;
+    }, []);
+
     const logout = useCallback(() => {
         setUser(null);
         localStorage.removeItem('nova_user');
@@ -33,7 +39,7 @@ export function AuthProvider({ children }) {
     const isLoggedIn = !!user;
 
     return (
-        <AuthContext.Provider value={{ user, login, logout, isAdmin, isCliente, isLoggedIn }}>
+        <AuthContext.Provider value={{ user, login, logout, register, isAdmin, isCliente, isLoggedIn }}>
             {children}
         </AuthContext.Provider>
     );

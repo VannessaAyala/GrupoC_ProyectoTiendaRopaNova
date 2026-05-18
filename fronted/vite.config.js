@@ -10,7 +10,7 @@ export default defineConfig({
         // En producción Spring Boot sirve todo, no hay proxy
         proxy: {
             '/api': {
-                target: 'http://localhost:8080',
+                target: 'http://localhost:8081',
                 changeOrigin: true,
             },
         },

@@ -84,7 +84,7 @@ export default function Login() {
 
                     <div className="divider" />
                     <p style={{ textAlign: 'center', fontSize: '0.8rem', color: 'var(--muted)' }}>
-                        ¿No tienes cuenta? Contacta al administrador.
+                        ¿No tienes cuenta? <Link to="/register">Regístrate aquí</Link>
                     </p>
                 </div>
             </div>
