@@ -22,7 +22,7 @@ on:
         required: false
         default: 'Rollback manual solicitado'
 
-  # También puede ser llamado si el CD falla (ver cd.yml)
+  # También puede ser llamado si el CD falla (ver cd.yml)s
   workflow_call:
 
 jobs:
