@@ -39,7 +39,7 @@ tasks.named('test') {
 |--------------------------------------------------------------------------
 */
 
-def frontendDir = file("$rootDir/../fronted")
+def frontendDir = file("$rootDir/fronted")
 def isWindows = System.getProperty("os.name").toLowerCase().contains("windows")
 
 task npmInstall(type: Exec) {

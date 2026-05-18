@@ -1,38 +1,37 @@
-# ── ETAPA 1: BUILD ────────────────────────────────────────────────────────────
-FROM eclipse-temurin:17-jdk-alpine AS build
+# ── ETAPA 1: BUILD FRONTEND ───────────────────────────────────────────────────
+FROM node:20-alpine AS frontend-build
+
+WORKDIR /fronted
+COPY fronted/package*.json ./
+RUN npm install
+COPY fronted/ ./
+RUN npm run build
+
+# ── ETAPA 2: BUILD BACKEND ───────────────────────────────────────────────────
+FROM eclipse-temurin:17-jdk-alpine AS backend-build
 
 WORKDIR /app
 
-# Instalar Node.js + npm
-RUN apk add --no-cache nodejs npm
-
-# ── Copiar backend ────────────────────────────────────────────────────────────
 COPY backend/gradlew ./gradlew
 COPY backend/gradle ./gradle
 COPY backend/build.gradle ./build.gradle
 COPY backend/settings.gradle ./settings.gradle
 COPY backend/src ./src
 
-# ── Copiar frontend (tu carpeta se llama fronted) ────────────────────────────
-COPY fronted ./fronted
+# Copiar el dist del frontend donde Spring Boot lo espera
+COPY --from=frontend-build /fronted/dist ./src/main/resources/static
 
-# Permisos gradlew
 RUN chmod +x gradlew
+# -x buildFrontend -x npmInstall -x copyFrontend porque ya está copiado
+RUN ./gradlew clean bootJar --no-daemon -x test -x buildFrontend -x npmInstall -x copyFrontend
 
-# Build completo (frontend + backend)
-RUN ./gradlew clean bootJar --no-daemon -x test
-
-# ── ETAPA 2: RUN ──────────────────────────────────────────────────────────────
-FROM eclipse-temurin:17-jre-alpine AS run
+# ── ETAPA 3: RUN ─────────────────────────────────────────────────────────────
+FROM eclipse-temurin:17-jre-alpine
 
 WORKDIR /app
-
-COPY --from=build /app/build/libs/*.jar app.jar
+COPY --from=backend-build /app/build/libs/*.jar app.jar
 
 EXPOSE 8080
-
-ENTRYPOINT ["java", \
-  "-Xms128m", \
-  "-Xmx256m", \
+ENTRYPOINT ["java", "-Xms128m", "-Xmx256m", \
   "-Djava.security.egd=file:/dev/./urandom", \
   "-jar", "app.jar"]
