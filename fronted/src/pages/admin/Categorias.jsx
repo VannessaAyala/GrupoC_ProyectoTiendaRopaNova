@@ -104,7 +104,7 @@ export default function Categorias() {
                         <table className="data-table">
                             <thead>
                                 <tr>
-                                    <th>ID</th>
+                                    <th>ID </th>
                                     <th>Nombre</th>
                                     <th>Acciones</th>
                                 </tr>
