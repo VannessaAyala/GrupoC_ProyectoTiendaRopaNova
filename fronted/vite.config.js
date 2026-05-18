@@ -1,17 +1,23 @@
-import { defineConfig } from 'vite';
-import react from '@vitejs/plugin-react';
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
 
-// https://vitejs.dev/config/
 export default defineConfig({
     plugins: [react()],
+    // base: '/' asegura que los assets se referencien desde la raíz
+    base: '/',
     server: {
+        // Solo aplica en desarrollo local (npm run dev)
+        // En producción Spring Boot sirve todo, no hay proxy
         proxy: {
-            // En desarrollo: redirige /api → backend local en :8080
-            // En producción (Render): el frontend se sirve en el mismo origen que el backend
             '/api': {
                 target: 'http://localhost:8080',
                 changeOrigin: true,
             },
         },
     },
-});
+    build: {
+        // Donde Gradle va a buscar el resultado del build
+        outDir: 'dist',
+        emptyOutDir: true,
+    },
+})
