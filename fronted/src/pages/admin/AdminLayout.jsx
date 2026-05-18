@@ -13,7 +13,7 @@ export default function AdminLayout() {
         <div className="admin-shell">
             <aside className="admin-sidebar">
                 <div className="sidebar-section">
-                    <div className="sidebar-label">Panel de control</div>
+                    <div className="sidebar-label"> Panel de control </div>
                     {LINKS.map(l => (
                         <NavLink
                             key={l.to}
