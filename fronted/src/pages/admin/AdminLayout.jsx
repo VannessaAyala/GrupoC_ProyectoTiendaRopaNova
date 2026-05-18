@@ -2,10 +2,10 @@ import React from 'react';
 import { Outlet, NavLink } from 'react-router-dom';
 
 const LINKS = [
-    { to: '/admin/productos',  icon: '👕', label: 'Productos'   },
-    { to: '/admin/categorias', icon: '🏷',  label: 'Categorías'  },
-    { to: '/admin/usuarios',   icon: '👤', label: 'Usuarios'    },
-    { to: '/admin/pedidos',    icon: '📦', label: 'Pedidos'     },
+    { to: '/admin/productos', icon: '👕 ', label: 'Productos' },
+    { to: '/admin/categorias', icon: '🏷', label: 'Categorías' },
+    { to: '/admin/usuarios', icon: '👤', label: 'Usuarios' },
+    { to: '/admin/pedidos', icon: '📦', label: 'Pedidos' },
 ];
 
 export default function AdminLayout() {
