@@ -130,7 +130,7 @@ export default function Productos() {
                     </div>
                 </div>
 
-                {/* Tabla */}
+                {/*Tabla*/}
                 {loading ? (
                     <div className="loading-center"><div className="loading-ring" /></div>
                 ) : (
