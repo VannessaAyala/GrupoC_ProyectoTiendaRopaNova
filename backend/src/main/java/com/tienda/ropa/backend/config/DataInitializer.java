@@ -13,17 +13,17 @@ import java.time.LocalDate;
 import java.util.List;
 
 /**
- * DataInitializer — carga datos de arranque si la base de datos está vacía.
- *
- * Se ejecuta una sola vez al iniciar la aplicación.
- * Si ya hay usuarios registrados, no hace nada (idempotente).
- *
- * Datos que crea:
- *  ✅ 1 usuario ADMIN
- *  ✅ 1 usuario CLIENTE
- *  ✅ 4 categorías de ropa
- *  ✅ 8 productos distribuidos en esas categorías
- *  ✅ 1 pedido de ejemplo para el cliente
+ DataInitializer — carga datos de arranque si la base de datos está vacía.
+ 
+ Se ejecuta una sola vez al iniciar la aplicación.
+ Si ya hay usuarios registrados, no hace nada (idempotente).
+ 
+ Datos que crea:
+   1 usuario ADMIN
+   1 usuario CLIENTE
+   4 categorías de ropa
+   8 productos distribuidos en esas categorías
+   1 pedido de ejemplo para el cliente
  */
 @Configuration
 public class DataInitializer {
@@ -67,7 +67,7 @@ public class DataInitializer {
             cliente.setActive(true);
             usuarioRepo.save(cliente);
 
-            log.info("  ✅ Usuarios creados:");
+            log.info("Usuarios creados:");
             log.info("      ADMIN   → nombre: admin     / pass: admin123");
             log.info("      CLIENTE → nombre: maria     / pass: cliente123");
 
@@ -78,7 +78,7 @@ public class DataInitializer {
             Categoria vestidos   = categoria(categoriaRepo, "Vestidos");
             Categoria accesorios = categoria(categoriaRepo, "Accesorios");
 
-            log.info("  ✅ Categorías creadas: Camisas, Pantalones, Vestidos, Accesorios");
+            log.info("Categorías creadas: Camisas, Pantalones, Vestidos, Accesorios");
 
             // ── 3. PRODUCTOS ──────────────────────────────────────────────
 
@@ -94,7 +94,7 @@ public class DataInitializer {
 
             Producto p8 = producto(productoRepo, "Cinturón Cuero Café",    19.99,  5, accesorios);
 
-            log.info("  ✅ Productos creados: {} en total", productoRepo.count());
+            log.info("Productos creados: {} en total", productoRepo.count());
 
             // ── 4. PEDIDO DE EJEMPLO ──────────────────────────────────────
 
@@ -127,9 +127,9 @@ public class DataInitializer {
 
             pedidoRepo.save(pedido);
 
-            log.info("  ✅ Pedido de ejemplo creado (usuario: maria, total: ${})", total);
+            log.info("Pedido de ejemplo creado (usuario: maria, total: ${})", total);
             log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-            log.info("  🚀 App lista. Entra con admin/admin123 o maria/cliente123");
+            log.info("App lista. Entra con admin/admin123 o maria/cliente123");
             log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
         };
     }
