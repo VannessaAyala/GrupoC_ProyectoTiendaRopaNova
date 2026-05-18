@@ -13,61 +13,56 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Controlador REST para Pedidos.
- *
- * Expone los endpoints JSON para crear, consultar y actualizar pedidos.
- * No contiene lógica de negocio: solo orquesta llamadas al servicio.
- */
+// Controlador de pedidos
 @RestController
 @RequestMapping("/api/pedidos")
 public class PedidoController {
 
     private final PedidoService service;
 
-    // Inyección por constructor
+    // Inyección del servicio
     public PedidoController(PedidoService service) {
         this.service = service;
     }
 
-    // ── POST /api/pedidos ─────────────────────────────────────────────────────
-    // Crear pedido: valida usuario, stock y genera los detalles automáticamente.
-
+    // Crea pedido
     @PostMapping
     public ResponseEntity<PedidoResponse> create(
-            @Valid @RequestBody PedidoCreateRequest request) {
+            @Valid @RequestBody PedidoCreateRequest request
+    ) {
 
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(service.create(request));
     }
 
-    // ── GET /api/pedidos/{id} ─────────────────────────────────────────────────
-    // Obtener un pedido por ID (200 OK o 404 desde GlobalExceptionHandler).
-
+    // Obtiene pedido por id
     @GetMapping("/{id}")
-    public ResponseEntity<PedidoResponse> getById(@PathVariable Long id) {
+    public ResponseEntity<PedidoResponse> getById(
+            @PathVariable Long id
+    ) {
+
         return ResponseEntity.ok(service.getById(id));
     }
 
-    // ── GET /api/pedidos ──────────────────────────────────────────────────────
-    // Listar todos los pedidos.
-
+    // Lista pedidos
     @GetMapping
     public ResponseEntity<List<PedidoResponse>> getAll() {
+
         return ResponseEntity.ok(service.list());
     }
 
-    // ── PATCH /api/pedidos/{id}/estado ────────────────────────────────────────
-    // Actualizar el estado del pedido (APROBADO, RECHAZADO, ENVIADO, ENTREGADO).
-    // PATCH es semántico para cambios parciales de un recurso.
-
+    // Actualiza estado del pedido
     @PatchMapping("/{id}/estado")
     public ResponseEntity<PedidoResponse> updateEstado(
             @PathVariable Long id,
-            @RequestBody Map<String, String> body) {
+            @RequestBody Map<String, String> body
+    ) {
 
         String nuevoEstado = body.get("estado");
-        return ResponseEntity.ok(service.updateEstado(id, nuevoEstado));
+
+        return ResponseEntity.ok(
+                service.updateEstado(id, nuevoEstado)
+        );
     }
 }

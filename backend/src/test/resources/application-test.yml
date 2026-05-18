@@ -1,10 +1,3 @@
-# ─────────────────────────────────────────────────────────────────────────────
-# Perfil "test" – Configuración para pruebas con H2 en memoria
-#
-# Se activa automáticamente con @ActiveProfiles("test") en los tests.
-# Reemplaza MySQL por H2 (base de datos embebida) para que los tests
-# funcionen en GitHub Actions SIN necesitar un servidor MySQL externo.
-# ─────────────────────────────────────────────────────────────────────────────
 spring:
   datasource:
     url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;MODE=MySQL
@@ -14,12 +7,12 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: create-drop     # Crea las tablas al inicio y las borra al final del test
-    show-sql: false             # Desactivado para no ensuciar los logs de test
+      ddl-auto: create-drop # Crea y elimina tablas automáticamente
+    show-sql: false # Oculta logs SQL
     properties:
       hibernate:
         dialect: org.hibernate.dialect.H2Dialect
 
   h2:
     console:
-      enabled: false            # No necesitamos la consola en tests
+      enabled: false # Consola H2 desactivada

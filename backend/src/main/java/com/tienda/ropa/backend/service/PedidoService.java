@@ -5,21 +5,18 @@ import com.tienda.ropa.backend.dto.pedido.PedidoResponse;
 
 import java.util.List;
 
-/**
- * Contrato del servicio de Pedidos.
- * La interfaz permite intercambiar implementaciones y facilita pruebas unitarias.
- */
+// Servicio de pedidos
 public interface PedidoService {
 
-    /** Crea un nuevo pedido validando usuario, stock y precios. */
+    // Crea un pedido
     PedidoResponse create(PedidoCreateRequest request);
 
-    /** Busca un pedido por su ID. Lanza NotFoundException si no existe. */
+    // Obtiene pedido por id
     PedidoResponse getById(Long id);
 
-    /** Retorna todos los pedidos registrados. */
+    // Lista pedidos
     List<PedidoResponse> list();
 
-    /** Cambia el estado del pedido (APROBADO, RECHAZADO, ENVIADO, ENTREGADO). */
+    // Actualiza estado del pedido
     PedidoResponse updateEstado(Long id, String nuevoEstado);
 }

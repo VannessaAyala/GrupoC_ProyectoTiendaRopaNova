@@ -14,93 +14,115 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * Manejador global de excepciones para toda la API.
- *
- * Requisito Paso 7 del laboratorio:
- *  - 404: NotFoundException (recurso no encontrado)
- *  - 409: ConflictException (duplicados, stock insuficiente, etc.)
- *  - 400: Validaciones fallidas de @Valid en los DTOs
- *  - 500: Última red de seguridad para errores inesperados
- *  - JSON estándar de error en todas las respuestas
- */
+// Manejo global de excepciones
 @ControllerAdvice
 public class GlobalExceptionHandler {
 
     private static final Logger log =
             LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
-    // ── 404 – Recurso no encontrado ───────────────────────────────────────────
-
+    // Error 404
     @ExceptionHandler(NotFoundException.class)
-    public ResponseEntity<Map<String, Object>> handleNotFound(NotFoundException ex) {
+    public ResponseEntity<Map<String, Object>> handleNotFound(
+            NotFoundException ex
+    ) {
+
         log.warn("NotFoundException: {}", ex.getMessage());
-        return buildError(HttpStatus.NOT_FOUND, ex.getMessage());
+
+        return buildError(
+                HttpStatus.NOT_FOUND,
+                ex.getMessage()
+        );
     }
 
-    // ── 409 – Conflicto de negocio ────────────────────────────────────────────
-
+    // Error 409
     @ExceptionHandler(ConflictException.class)
-    public ResponseEntity<Map<String, Object>> handleConflict(ConflictException ex) {
+    public ResponseEntity<Map<String, Object>> handleConflict(
+            ConflictException ex
+    ) {
+
         log.warn("ConflictException: {}", ex.getMessage());
-        return buildError(HttpStatus.CONFLICT, ex.getMessage());
+
+        return buildError(
+                HttpStatus.CONFLICT,
+                ex.getMessage()
+        );
     }
 
-    // ── 400 – Validación fallida (@Valid) ─────────────────────────────────────
-
+    // Error 400
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, Object>> handleValidation(
-            MethodArgumentNotValidException ex) {
+            MethodArgumentNotValidException ex
+    ) {
 
-        // Recolecta todos los errores campo → mensaje
         Map<String, String> fieldErrors = new HashMap<>();
+
         for (FieldError fe : ex.getBindingResult().getFieldErrors()) {
-            fieldErrors.put(fe.getField(), fe.getDefaultMessage());
+            fieldErrors.put(
+                    fe.getField(),
+                    fe.getDefaultMessage()
+            );
         }
 
         Map<String, Object> body = buildErrorBody(
                 HttpStatus.BAD_REQUEST,
-                "Validación fallida. Revisa los campos enviados.");
-        body.put("fields", fieldErrors); // Detalle de qué campos fallaron
+                "Validación fallida. Revisa los campos enviados."
+        );
 
-        log.warn("ValidationException - campos inválidos: {}", fieldErrors);
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
+        body.put("fields", fieldErrors);
+
+        log.warn(
+                "ValidationException - campos inválidos: {}",
+                fieldErrors
+        );
+
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(body);
     }
 
-    // ── 500 – Última red de seguridad ─────────────────────────────────────────
-
+    // Error 500
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<Map<String, Object>> handleGeneric(Exception ex) {
-        log.error("Error inesperado: {}", ex.getMessage(), ex);
+    public ResponseEntity<Map<String, Object>> handleGeneric(
+            Exception ex
+    ) {
+
+        log.error(
+                "Error inesperado: {}",
+                ex.getMessage(),
+                ex
+        );
+
         return buildError(
                 HttpStatus.INTERNAL_SERVER_ERROR,
-                "Error interno del servidor. Contacta al administrador.");
+                "Error interno del servidor. Contacta al administrador."
+        );
     }
 
-    // ── Helpers ───────────────────────────────────────────────────────────────
-
-    /**
-     * Construye el JSON estándar de error:
-     * {
-     *   "timestamp": "2024-...",
-     *   "status":    404,
-     *   "error":     "Not Found",
-     *   "message":   "..."
-     * }
-     */
+    // Construye respuesta de error
     private ResponseEntity<Map<String, Object>> buildError(
-            HttpStatus status, String message) {
+            HttpStatus status,
+            String message
+    ) {
+
         return ResponseEntity
                 .status(status)
                 .body(buildErrorBody(status, message));
     }
 
-    private Map<String, Object> buildErrorBody(HttpStatus status, String message) {
+    // Construye cuerpo del error
+    private Map<String, Object> buildErrorBody(
+            HttpStatus status,
+            String message
+    ) {
+
         Map<String, Object> body = new HashMap<>();
+
         body.put("timestamp", LocalDateTime.now().toString());
-        body.put("status",    status.value());
-        body.put("error",     status.getReasonPhrase());
-        body.put("message",   message);
+        body.put("status", status.value());
+        body.put("error", status.getReasonPhrase());
+        body.put("message", message);
+
         return body;
     }
 }

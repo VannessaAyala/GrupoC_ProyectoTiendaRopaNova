@@ -1,7 +1,6 @@
 package com.tienda.ropa.backend.web.controller;
 
 import com.tienda.ropa.backend.dto.usuario.*;
-
 import com.tienda.ropa.backend.service.UsuarioService;
 
 import jakarta.validation.Valid;
@@ -15,66 +14,73 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+// Controlador de usuarios
 @RestController
 @RequestMapping("/api/usuarios")
 public class UsuarioController {
 
     private final UsuarioService service;
 
+    // Inyección del servicio
     public UsuarioController(UsuarioService service) {
         this.service = service;
     }
 
-    // CREAR USUARIO
+    // Crea usuario
     @PostMapping
     public ResponseEntity<UsuarioResponse> create(
-            @Valid @RequestBody UsuarioCreateRequest request) {
+            @Valid @RequestBody UsuarioCreateRequest request
+    ) {
 
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(service.create(request));
     }
 
-    // OBTENER POR ID
+    // Obtiene usuario por id
     @GetMapping("/{id}")
     public ResponseEntity<UsuarioResponse> getById(
-            @PathVariable Long id) {
+            @PathVariable Long id
+    ) {
 
         return ResponseEntity.ok(service.getById(id));
     }
 
-    // LISTAR TODOS
+    // Lista usuarios
     @GetMapping
     public ResponseEntity<List<UsuarioResponse>> getAll() {
 
         return ResponseEntity.ok(service.list());
     }
 
-    // DESACTIVAR
+    // Desactiva usuario
     @PatchMapping("/{id}/deactivate")
     public ResponseEntity<UsuarioResponse> deactivate(
-            @PathVariable Long id) {
+            @PathVariable Long id
+    ) {
 
         return ResponseEntity.ok(service.deactivate(id));
     }
 
-    // BUSCAR POR NOMBRE
+    // Busca usuarios por nombre
     @GetMapping("/search")
     public ResponseEntity<Page<UsuarioResponse>> search(
             @RequestParam String name,
             @RequestParam int page,
-            @RequestParam int size) {
+            @RequestParam int size
+    ) {
 
         return ResponseEntity.ok(
                 service.searchByName(name, page, size)
         );
     }
 
-    // ACTUALIZAR
+    // Actualiza usuario
     @PutMapping("/{id}")
     public ResponseEntity<UsuarioResponse> update(
             @PathVariable Long id,
-            @Valid @RequestBody UsuarioUpdateRequest request) {
+            @Valid @RequestBody UsuarioUpdateRequest request
+    ) {
 
         return ResponseEntity.ok(
                 service.update(id, request)

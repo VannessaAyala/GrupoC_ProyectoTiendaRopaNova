@@ -12,19 +12,7 @@ import org.springframework.context.annotation.Configuration;
 import java.time.LocalDate;
 import java.util.List;
 
-/**
- DataInitializer — carga datos de arranque si la base de datos está vacía.
- 
- Se ejecuta una sola vez al iniciar la aplicación.
- Si ya hay usuarios registrados, no hace nada (idempotente).
- 
- Datos que crea:
-   1 usuario ADMIN
-   1 usuario CLIENTE
-   4 categorías de ropa
-   8 productos distribuidos en esas categorías
-   1 pedido de ejemplo para el cliente
- */
+// Carga datos iniciales
 @Configuration
 public class DataInitializer {
 
@@ -32,29 +20,26 @@ public class DataInitializer {
 
     @Bean
     CommandLineRunner initData(
-            UsuarioRepository   usuarioRepo,
+            UsuarioRepository usuarioRepo,
             CategoriaRepository categoriaRepo,
-            ProductoRepository  productoRepo,
-            PedidoRepository    pedidoRepo
+            ProductoRepository productoRepo,
+            PedidoRepository pedidoRepo
     ) {
         return args -> {
 
-            // ── Guardia: si ya hay datos, no hacer nada ───────────────────
+            // Verifica si ya existen datos
             if (usuarioRepo.count() > 0) {
-                log.info("DataInitializer: base de datos ya tiene datos, omitiendo seed.");
+                log.info("Base de datos ya inicializada.");
                 return;
             }
 
-            log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-            log.info("  DataInitializer: cargando datos iniciales...");
-            log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+            log.info("Cargando datos iniciales...");
 
-            // ── 1. USUARIOS ───────────────────────────────────────────────
-
+            // Usuarios
             Usuario admin = new Usuario();
             admin.setNombre("admin");
             admin.setCorreo("admin@novatienda.com");
-            admin.setContrasena("admin123");   // En producción usar BCrypt
+            admin.setContrasena("admin123");
             admin.setRol("ADMIN");
             admin.setActive(true);
             usuarioRepo.save(admin);
@@ -67,50 +52,39 @@ public class DataInitializer {
             cliente.setActive(true);
             usuarioRepo.save(cliente);
 
-            log.info("Usuarios creados:");
-            log.info("      ADMIN   → nombre: admin     / pass: admin123");
-            log.info("      CLIENTE → nombre: maria     / pass: cliente123");
-
-            // ── 2. CATEGORÍAS ─────────────────────────────────────────────
-
-            Categoria camisas    = categoria(categoriaRepo, "Camisas");
+            // Categorías
+            Categoria camisas = categoria(categoriaRepo, "Camisas");
             Categoria pantalones = categoria(categoriaRepo, "Pantalones");
-            Categoria vestidos   = categoria(categoriaRepo, "Vestidos");
+            Categoria vestidos = categoria(categoriaRepo, "Vestidos");
             Categoria accesorios = categoria(categoriaRepo, "Accesorios");
 
-            log.info("Categorías creadas: Camisas, Pantalones, Vestidos, Accesorios");
-
-            // ── 3. PRODUCTOS ──────────────────────────────────────────────
-
-            Producto p1 = producto(productoRepo, "Camisa Oxford Blanca",    29.99, 50, camisas);
+            // Productos
+            Producto p1 = producto(productoRepo, "Camisa Oxford Blanca", 29.99, 50, camisas);
             Producto p2 = producto(productoRepo, "Camisa Lino Azul Marino", 34.99, 30, camisas);
-            Producto p3 = producto(productoRepo, "Camisa Cuadros Flannel",  27.99, 25, camisas);
+            Producto p3 = producto(productoRepo, "Camisa Cuadros Flannel", 27.99, 25, camisas);
 
-            Producto p4 = producto(productoRepo, "Pantalón Chino Beige",   49.99, 40, pantalones);
-            Producto p5 = producto(productoRepo, "Jeans Slim Fit Oscuro",  59.99, 35, pantalones);
+            Producto p4 = producto(productoRepo, "Pantalón Chino Beige", 49.99, 40, pantalones);
+            Producto p5 = producto(productoRepo, "Jeans Slim Fit Oscuro", 59.99, 35, pantalones);
 
-            Producto p6 = producto(productoRepo, "Vestido Floral Verano",  44.99, 20, vestidos);
-            Producto p7 = producto(productoRepo, "Vestido Midi Negro",     54.99, 15, vestidos);
+            Producto p6 = producto(productoRepo, "Vestido Floral Verano", 44.99, 20, vestidos);
+            Producto p7 = producto(productoRepo, "Vestido Midi Negro", 54.99, 15, vestidos);
 
-            Producto p8 = producto(productoRepo, "Cinturón Cuero Café",    19.99,  5, accesorios);
+            Producto p8 = producto(productoRepo, "Cinturón Cuero Café", 19.99, 5, accesorios);
 
-            log.info("Productos creados: {} en total", productoRepo.count());
-
-            // ── 4. PEDIDO DE EJEMPLO ──────────────────────────────────────
-
+            // Pedido de ejemplo
             Pedido pedido = new Pedido();
             pedido.setUsuario(cliente);
             pedido.setFecha(LocalDate.now());
             pedido.setEstado("PENDIENTE");
 
-            // Detalle 1: 2 × Camisa Oxford Blanca
+            // Detalle 1
             DetallePedido d1 = new DetallePedido();
             d1.setProducto(p1);
             d1.setCantidad(2);
             d1.setSubtotal(p1.getPrecio() * 2);
             pedido.addDetalle(d1);
 
-            // Detalle 2: 1 × Pantalón Chino Beige
+            // Detalle 2
             DetallePedido d2 = new DetallePedido();
             d2.setProducto(p4);
             d2.setCantidad(1);
@@ -120,39 +94,39 @@ public class DataInitializer {
             double total = d1.getSubtotal() + d2.getSubtotal();
             pedido.setTotal(total);
 
-            // Descontar stock manualmente (igual que lo hace PedidoServiceImpl)
+            // Actualiza stock
             p1.setStock(p1.getStock() - 2);
             p4.setStock(p4.getStock() - 1);
-            productoRepo.saveAll(List.of(p1, p4));
 
+            productoRepo.saveAll(List.of(p1, p4));
             pedidoRepo.save(pedido);
 
-            log.info("Pedido de ejemplo creado (usuario: maria, total: ${})", total);
-            log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-            log.info("App lista. Entra con admin/admin123 o maria/cliente123");
-            log.info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+            log.info("Datos iniciales cargados correctamente.");
         };
     }
 
-    // ── Helpers ───────────────────────────────────────────────────────────────
-
+    // Crea categoría
     private Categoria categoria(CategoriaRepository repo, String nombre) {
         Categoria c = new Categoria();
         c.setNombre(nombre);
         return repo.save(c);
     }
 
-    private Producto producto(ProductoRepository repo,
-                              String nombre,
-                              double precio,
-                              int stock,
-                              Categoria categoria) {
+    // Crea producto
+    private Producto producto(
+            ProductoRepository repo,
+            String nombre,
+            double precio,
+            int stock,
+            Categoria categoria
+    ) {
         Producto p = new Producto();
         p.setNombre(nombre);
         p.setPrecio(precio);
         p.setStock(stock);
         p.setActive(true);
         p.setCategoria(categoria);
+
         return repo.save(p);
     }
 }

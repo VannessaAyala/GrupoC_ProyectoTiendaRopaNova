@@ -9,68 +9,77 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
 
-/**
- * Controlador de autenticación básica.
- *
- * Nota: Este endpoint implementa autenticación simple por nombre + contraseña.
- * Para producción se recomienda migrar a Spring Security + JWT (actividad 3 del lab).
- *
- * POST /api/auth/login
- *  - Body: { "nombre": "...", "contrasena": "..." }
- *  - Respuesta exitosa (200): datos públicos del usuario
- *  - 401: credenciales inválidas
- *  - 403: usuario desactivado
- */
+// Controlador de autenticación
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
 
     private final UsuarioRepository usuarioRepository;
 
+    // Inyección del repositorio
     public AuthController(UsuarioRepository usuarioRepository) {
         this.usuarioRepository = usuarioRepository;
     }
 
+    // Login de usuario
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody Map<String, String> credentials) {
+    public ResponseEntity<?> login(
+            @RequestBody Map<String, String> credentials
+    ) {
 
-        String nombre    = credentials.get("nombre");
+        String nombre = credentials.get("nombre");
         String contrasena = credentials.get("contrasena");
 
-        // Validación básica de campos
-        if (nombre == null || nombre.isBlank() ||
-                contrasena == null || contrasena.isBlank()) {
+        // Valida campos
+        if (
+                nombre == null || nombre.isBlank() ||
+                        contrasena == null || contrasena.isBlank()
+        ) {
+
             return ResponseEntity
                     .status(HttpStatus.BAD_REQUEST)
-                    .body(Map.of("error", "Los campos 'nombre' y 'contrasena' son obligatorios."));
+                    .body(Map.of(
+                            "error",
+                            "Los campos 'nombre' y 'contrasena' son obligatorios."
+                    ));
         }
 
-        // Buscar usuario por nombre
+        // Busca usuario
         Usuario usuario = usuarioRepository.findByNombre(nombre)
                 .orElse(null);
 
-        // Credenciales inválidas (usuario no existe o contraseña incorrecta)
-        // Retornamos el mismo mensaje para no dar pistas de seguridad
-        if (usuario == null || !usuario.getContrasena().equals(contrasena)) {
+        // Valida credenciales
+        if (
+                usuario == null ||
+                        !usuario.getContrasena().equals(contrasena)
+        ) {
+
             return ResponseEntity
                     .status(HttpStatus.UNAUTHORIZED)
-                    .body(Map.of("error", "Credenciales inválidas."));
+                    .body(Map.of(
+                            "error",
+                            "Credenciales inválidas."
+                    ));
         }
 
-        // Usuario desactivado
+        // Valida estado
         if (!Boolean.TRUE.equals(usuario.getActive())) {
+
             return ResponseEntity
                     .status(HttpStatus.FORBIDDEN)
-                    .body(Map.of("error", "Cuenta desactivada. Contacta al administrador."));
+                    .body(Map.of(
+                            "error",
+                            "Cuenta desactivada. Contacta al administrador."
+                    ));
         }
 
-        // Login exitoso: devolver solo datos públicos (nunca la contraseña)
+        // Respuesta exitosa
         Map<String, Object> response = Map.of(
-                "id",      usuario.getId(),
-                "nombre",  usuario.getNombre(),
-                "correo",  usuario.getCorreo(),
-                "rol",     usuario.getRol(),
-                "active",  usuario.getActive()
+                "id", usuario.getId(),
+                "nombre", usuario.getNombre(),
+                "correo", usuario.getCorreo(),
+                "rol", usuario.getRol(),
+                "active", usuario.getActive()
         );
 
         return ResponseEntity.ok(response);
