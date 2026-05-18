@@ -92,7 +92,7 @@ export default function Productos() {
             </div>
 
             <div className="admin-split">
-                {/* Formulario */}
+                {/*Formulario*/}
                 <div className="form-panel">
                     <div className="form-panel-header">
                         {editingId ? 'Editar producto' : '+ Nuevo producto'}
