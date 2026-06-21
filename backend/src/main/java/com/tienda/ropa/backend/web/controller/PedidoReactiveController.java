@@ -14,6 +14,8 @@ import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.time.Duration;
+
 @RestController
 @RequestMapping("/api/reactivo/pedidos")
 public class PedidoReactiveController {
@@ -44,6 +46,8 @@ public class PedidoReactiveController {
     @PostMapping("/procesar-lotes")
     public ResponseEntity<String> procesarPedidosPorLotes() {
         Flux.fromIterable(pedidoRepository.findAll())
+                .delayElements(Duration.ofMillis(400))
+                .filter(pedido -> pedido.getTotal() >= 50.00)
                 .map(pedido -> {
                     PedidoResponse response = new PedidoResponse();
                     response.setId(pedido.getId());
@@ -53,7 +57,28 @@ public class PedidoReactiveController {
                     response.setTotal(pedido.getTotal());
                     return response;
                 })
-                .onErrorResume(error -> Flux.empty())
+                .map(response -> {
+                    if (response.getTotal() > 100.00) {
+                        throw new RuntimeException(
+                                "Pedido sospechoso, total mayor a $100: $" + response.getTotal()
+                        );
+                    }
+                    return response;
+                })
+                .doOnError(error ->
+                        System.out.println("[Pedidos] Error detectado: " + error.getMessage())
+                )
+                .onErrorResume(error -> {
+                    System.out.println("[Pedidos] Recuperando el flujo con un pedido de respaldo...");
+
+                    PedidoResponse respaldo = new PedidoResponse();
+                    respaldo.setId(-1L);
+                    respaldo.setUsuario("RECUPERACION");
+                    respaldo.setEstado("ERROR_RECUPERADO");
+                    respaldo.setTotal(0.0);
+
+                    return Flux.just(respaldo);
+                })
                 .subscribe(new PedidoBackpressureSubscriber());
 
         return ResponseEntity.accepted().body("Procesamiento por lotes iniciado. Revisa la consola del backend.");
