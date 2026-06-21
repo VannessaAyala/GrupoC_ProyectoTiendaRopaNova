@@ -15,15 +15,39 @@ export default function Pedidos() {
     const [pedidos,  setPedidos]  = useState([]);
     const [loading,  setLoading]  = useState(true);
     const [filter,   setFilter]   = useState('TODOS');
+    const [promedio, setPromedio] = useState(null);
     const { toast } = useToast();
 
-    useEffect(() => { load(); }, []);
+    useEffect(() => {
+        load();
+        loadPromedio();
+
+        const source = new EventSource('/api/reactivo/pedidos/stream');
+        source.onmessage = (event) => {
+            const pedidoNuevo = JSON.parse(event.data);
+            setPedidos(prev => {
+                const existe = prev.some(p => p.id === pedidoNuevo.id);
+                return existe
+                    ? prev.map(p => (p.id === pedidoNuevo.id ? pedidoNuevo : p))
+                    : [pedidoNuevo, ...prev];
+            });
+        };
+        source.onerror = () => source.close();
+
+        return () => source.close();
+    }, []);
 
     const load = () => {
         api.pedidos.getAll()
             .then(setPedidos)
             .catch(() => toast('Error cargando pedidos', 'error'))
             .finally(() => setLoading(false));
+    };
+
+    const loadPromedio = () => {
+        api.pedidos.getPromedio()
+            .then(setPromedio)
+            .catch(() => setPromedio(null));
     };
 
     const handleEstado = async (id, nuevoEstado) => {
@@ -48,6 +72,15 @@ export default function Pedidos() {
                     <p>Gestiona y actualiza el estado de cada pedido</p>
                 </div>
                 <span className="badge badge-neutral">{pedidos.length} total</span>
+            </div>
+
+            <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap' }}>
+                <span className="badge badge-info">
+                    Promedio reactivo: {promedio === null ? '...' : `$${parseFloat(promedio).toFixed(2)}`}
+                </span>
+                <button className="btn btn-outline btn-sm" onClick={() => api.pedidos.procesarLotes()}>
+                    Ejecutar backpressure
+                </button>
             </div>
 
             {/* Filtros */}

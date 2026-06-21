@@ -10,6 +10,7 @@ import com.tienda.ropa.backend.repository.PedidoRepository;
 import com.tienda.ropa.backend.repository.ProductoRepository;
 import com.tienda.ropa.backend.repository.UsuarioRepository;
 import com.tienda.ropa.backend.service.PedidoService;
+import com.tienda.ropa.backend.service.reactive.PedidoEventBusService;
 import com.tienda.ropa.backend.web.advice.ConflictException;
 import com.tienda.ropa.backend.web.advice.NotFoundException;
 
@@ -26,16 +27,19 @@ public class PedidoServiceImpl implements PedidoService {
     private final PedidoRepository pedidoRepo;
     private final UsuarioRepository usuarioRepo;
     private final ProductoRepository productoRepo;
+        private final PedidoEventBusService pedidoEventBusService;
 
     // Inyección de dependencias
     public PedidoServiceImpl(
             PedidoRepository pedidoRepo,
             UsuarioRepository usuarioRepo,
-            ProductoRepository productoRepo
+                        ProductoRepository productoRepo,
+                        PedidoEventBusService pedidoEventBusService
     ) {
         this.pedidoRepo = pedidoRepo;
         this.usuarioRepo = usuarioRepo;
         this.productoRepo = productoRepo;
+                this.pedidoEventBusService = pedidoEventBusService;
     }
 
     // Crea un pedido
@@ -105,7 +109,9 @@ public class PedidoServiceImpl implements PedidoService {
 
         pedido.setTotal(total);
 
-        return toResponse(pedidoRepo.save(pedido));
+        PedidoResponse response = toResponse(pedidoRepo.save(pedido));
+        pedidoEventBusService.publishPedido(response);
+        return response;
     }
 
     // Obtiene pedido por id
@@ -158,7 +164,9 @@ public class PedidoServiceImpl implements PedidoService {
 
         pedido.setEstado(nuevoEstado.toUpperCase());
 
-        return toResponse(pedidoRepo.save(pedido));
+                PedidoResponse response = toResponse(pedidoRepo.save(pedido));
+                pedidoEventBusService.publishPedido(response);
+                return response;
     }
 
     // Convierte entidad a DTO

@@ -71,6 +71,8 @@ export const api = {
         getById: (id) => get(`/pedidos/${id}`),
         create: (data) => post('/pedidos', data),
         updateEstado: (id, estado) => patch(`/pedidos/${id}/estado`, { estado }),
+        getPromedio: () => get('/reactivo/pedidos/promedio'),
+        procesarLotes: () => post('/reactivo/pedidos/procesar-lotes', {}),
     },
 };
 
