@@ -73,7 +73,7 @@ export default function Home() {
 
     return (
         <>
-            {/* ── HERO ─────────────────────────────────────────────────── */}
+            {/* ── HERO ───*/}
             <div className="hero">
                 <div className="hero-inner">
                     <p className="hero-eyebrow">Colección 2026</p>
