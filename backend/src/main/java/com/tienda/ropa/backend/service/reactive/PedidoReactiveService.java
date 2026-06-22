@@ -45,8 +45,7 @@ public class PedidoReactiveService {
         return Mono.fromCallable(() -> pedidoRepository.findAll().stream()
                         .mapToDouble(pedido -> pedido.getTotal() == null ? 0.0 : pedido.getTotal())
                         .average()
-                        .orElse(0.0))
-                .subscribeOn(Schedulers.boundedElastic());
+                        .orElse(0.0));
     }
 
     public void procesarPedidosPorLotes() {
