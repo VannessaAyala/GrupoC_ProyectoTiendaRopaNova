@@ -139,7 +139,7 @@ export default function Home() {
                 </div>
             </div>
 
-            {/* ── CATÁLOGO ─────────────────────────────────────────────── */}
+            {/* ── CATÁLOGO ───────── */}
             <div id="catalogo" className="container page-wrapper">
                 <div className="section-title">
                     <h2>Catálogo</h2>
