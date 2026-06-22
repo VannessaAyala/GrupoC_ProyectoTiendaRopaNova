@@ -29,7 +29,7 @@ export default function Home() {
 
     const handleAdd = (product) => {
         if (!isLoggedIn) {
-            toast('Inicia sesión para agregar al carrito');
+            toast('Inicia sesion para agregar al carrito.');
             navigate('/login');
             return;
         }
