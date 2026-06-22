@@ -26,7 +26,7 @@ public class UsuarioServiceImpl implements UsuarioService {
     public UsuarioResponse create(UsuarioCreateRequest request) {
 
         if(repo.existsByCorreo(request.getCorreo())) {
-            throw new ConflictException("El correo ya existe");
+            throw new ConflictException("El correo " + request.getCorreo() + " ya está registrado en el sistema");
         }
 
         Usuario u = new Usuario();
@@ -45,7 +45,7 @@ public class UsuarioServiceImpl implements UsuarioService {
 
         Usuario u = repo.findById(id)
                 .orElseThrow(() ->
-                        new NotFoundException("Usuario no encontrado"));
+                        new NotFoundException("Usuario con ID " + id + " no existe en el sistema"));
 
         return toResponse(u);
     }
@@ -63,7 +63,7 @@ public class UsuarioServiceImpl implements UsuarioService {
 
         Usuario u = repo.findById(id)
                 .orElseThrow(() ->
-                        new NotFoundException("Usuario no encontrado"));
+                        new NotFoundException("No se puede desactivar: usuario con ID " + id + " no existe"));
 
         u.setActive(false);
 
@@ -76,13 +76,12 @@ public class UsuarioServiceImpl implements UsuarioService {
 
         Usuario u = repo.findById(id)
                 .orElseThrow(() ->
-                        new NotFoundException("Usuario no encontrado"));
+                        new NotFoundException("No se puede actualizar: usuario con ID " + id + " no existe"));
 
         if(request.getCorreo() != null &&
                 !request.getCorreo().equals(u.getCorreo()) &&
                 repo.existsByCorreo(request.getCorreo())) {
-
-            throw new ConflictException("Correo ya registrado");
+            throw new ConflictException("El correo " + request.getCorreo() + " ya está registrado en otro usuario");
         }
 
         if(request.getNombre() != null)

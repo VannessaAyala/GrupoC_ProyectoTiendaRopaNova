@@ -11,7 +11,13 @@ async function request(path, options = {}) {
 
     if (res.status === 204) return null;
 
-    const data = await res.json();
+    const contentType = res.headers.get('content-type') || '';
+    const body = await res.text();
+    const data = !body
+        ? null
+        : contentType.includes('application/json')
+            ? JSON.parse(body)
+            : body;
 
     if (!res.ok) {
         // El GlobalExceptionHandler del backend devuelve { message, status, error }
@@ -71,6 +77,8 @@ export const api = {
         getById: (id) => get(`/pedidos/${id}`),
         create: (data) => post('/pedidos', data),
         updateEstado: (id, estado) => patch(`/pedidos/${id}/estado`, { estado }),
+        getPromedio: () => get('/reactivo/pedidos/promedio'),
+        procesarLotes: () => post('/reactivo/pedidos/procesar-lotes', {}),
     },
 };
 

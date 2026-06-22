@@ -15,15 +15,62 @@ export default function Pedidos() {
     const [pedidos,  setPedidos]  = useState([]);
     const [loading,  setLoading]  = useState(true);
     const [filter,   setFilter]   = useState('TODOS');
+    const [promedio, setPromedio] = useState(null);
+    const [streamStatus, setStreamStatus] = useState('conectando');
+    const [processingMessages, setProcessingMessages] = useState([]);
+    const [processing, setProcessing] = useState(false);
     const { toast } = useToast();
 
-    useEffect(() => { load(); }, []);
+    useEffect(() => {
+        load();
+
+        const source = new EventSource('/api/reactivo/pedidos/stream');
+        source.onopen = () => setStreamStatus('conectado');
+        source.onmessage = (event) => {
+            const pedidoNuevo = JSON.parse(event.data);
+            setPedidos(prev => {
+                const existe = prev.some(p => p.id === pedidoNuevo.id);
+                return existe
+                    ? prev.map(p => (p.id === pedidoNuevo.id ? pedidoNuevo : p))
+                    : [pedidoNuevo, ...prev];
+            });
+        };
+        source.onerror = () => setStreamStatus('reconectando');
+
+        const promedioSource = new EventSource('/api/reactivo/pedidos/promedio-stream');
+        promedioSource.onmessage = (event) => setPromedio(Number(event.data));
+
+        const processingSource = new EventSource('/api/reactivo/pedidos/procesamiento-stream');
+        processingSource.onmessage = (event) => {
+            setProcessingMessages(prev => [...prev.slice(-19), event.data]);
+            if (event.data.includes('Flujo completado') || event.data.includes('Error en el flujo')) {
+                setProcessing(false);
+            }
+        };
+
+        return () => {
+            source.close();
+            promedioSource.close();
+            processingSource.close();
+        };
+    }, []);
 
     const load = () => {
         api.pedidos.getAll()
             .then(setPedidos)
             .catch(() => toast('Error cargando pedidos', 'error'))
             .finally(() => setLoading(false));
+    };
+
+    const handleProcesarLotes = async () => {
+        setProcessingMessages([]);
+        setProcessing(true);
+        try {
+            await api.pedidos.procesarLotes();
+        } catch (err) {
+            setProcessing(false);
+            toast(err.message || 'Error iniciando el procesamiento', 'error');
+        }
     };
 
     const handleEstado = async (id, nuevoEstado) => {
@@ -49,6 +96,38 @@ export default function Pedidos() {
                 </div>
                 <span className="badge badge-neutral">{pedidos.length} total</span>
             </div>
+
+            <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap' }}>
+                <span className="badge badge-info">
+                    Promedio reactivo: {promedio === null ? '...' : `$${parseFloat(promedio).toFixed(2)}`}
+                </span>
+                <span className={`badge ${streamStatus === 'conectado' ? 'badge-success' : 'badge-neutral'}`}>
+                    SSE: {streamStatus}
+                </span>
+                <button
+                    className="btn btn-outline btn-sm"
+                    onClick={handleProcesarLotes}
+                    disabled={processing}
+                >
+                    {processing ? 'Procesando...' : 'Ejecutar backpressure'}
+                </button>
+            </div>
+
+            {processingMessages.length > 0 && (
+                <div style={{
+                    background: 'var(--card)',
+                    border: '1px solid var(--border)',
+                    borderRadius: '8px',
+                    padding: '0.75rem 1rem',
+                    marginBottom: '1rem',
+                    fontFamily: 'monospace',
+                    fontSize: '0.8rem'
+                }}>
+                    {processingMessages.map((message, index) => (
+                        <div key={`${index}-${message}`}>{message}</div>
+                    ))}
+                </div>
+            )}
 
             {/* Filtros */}
             <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>

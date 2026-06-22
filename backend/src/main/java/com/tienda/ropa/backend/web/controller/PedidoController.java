@@ -62,7 +62,8 @@ public class PedidoController {
         String nuevoEstado = body.get("estado");
 
         return ResponseEntity.ok(
-                service.updateEstado(id, nuevoEstado)
+            service.updateEstado(id, nuevoEstado)
+
         );
     }
 }

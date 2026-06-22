@@ -10,7 +10,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import java.time.LocalDate;
-import java.util.List;
 
 // Carga datos iniciales
 @Configuration
@@ -71,35 +70,11 @@ public class DataInitializer {
 
             Producto p8 = producto(productoRepo, "Cinturón Cuero Café", 19.99, 5, accesorios);
 
-            // Pedido de ejemplo
-            Pedido pedido = new Pedido();
-            pedido.setUsuario(cliente);
-            pedido.setFecha(LocalDate.now());
-            pedido.setEstado("PENDIENTE");
-
-            // Detalle 1
-            DetallePedido d1 = new DetallePedido();
-            d1.setProducto(p1);
-            d1.setCantidad(2);
-            d1.setSubtotal(p1.getPrecio() * 2);
-            pedido.addDetalle(d1);
-
-            // Detalle 2
-            DetallePedido d2 = new DetallePedido();
-            d2.setProducto(p4);
-            d2.setCantidad(1);
-            d2.setSubtotal(p4.getPrecio());
-            pedido.addDetalle(d2);
-
-            double total = d1.getSubtotal() + d2.getSubtotal();
-            pedido.setTotal(total);
-
-            // Actualiza stock
-            p1.setStock(p1.getStock() - 2);
-            p4.setStock(p4.getStock() - 1);
-
-            productoRepo.saveAll(List.of(p1, p4));
-            pedidoRepo.save(pedido);
+            // Pedidos menores a $100 para demostrar filtro y backpressure.
+            crearPedido(pedidoRepo, productoRepo, cliente, p1, 2); // $59.98
+            crearPedido(pedidoRepo, productoRepo, cliente, p2, 2); // $69.98
+            crearPedido(pedidoRepo, productoRepo, cliente, p6, 2); // $89.98
+            crearPedido(pedidoRepo, productoRepo, cliente, p8, 1); // $19.99 (filtrado)
 
             log.info("Datos iniciales cargados correctamente.");
         };
@@ -128,5 +103,30 @@ public class DataInitializer {
         p.setCategoria(categoria);
 
         return repo.save(p);
+    }
+
+    private Pedido crearPedido(
+            PedidoRepository pedidoRepo,
+            ProductoRepository productoRepo,
+            Usuario usuario,
+            Producto producto,
+            int cantidad
+    ) {
+        Pedido pedido = new Pedido();
+        pedido.setUsuario(usuario);
+        pedido.setFecha(LocalDate.now());
+        pedido.setEstado("PENDIENTE");
+
+        DetallePedido detalle = new DetallePedido();
+        detalle.setProducto(producto);
+        detalle.setCantidad(cantidad);
+        detalle.setSubtotal(producto.getPrecio() * cantidad);
+        pedido.addDetalle(detalle);
+        pedido.setTotal(detalle.getSubtotal());
+
+        producto.setStock(producto.getStock() - cantidad);
+        productoRepo.save(producto);
+
+        return pedidoRepo.save(pedido);
     }
 }
