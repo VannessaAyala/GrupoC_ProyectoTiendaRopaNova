@@ -3,7 +3,6 @@ package com.tienda.ropa.backend.web.controller;
 import com.tienda.ropa.backend.dto.pedido.PedidoCreateRequest;
 import com.tienda.ropa.backend.dto.pedido.PedidoResponse;
 import com.tienda.ropa.backend.service.PedidoService;
-import com.tienda.ropa.backend.service.reactive.PedidoEventBusService;
 
 import jakarta.validation.Valid;
 
@@ -20,12 +19,10 @@ import java.util.Map;
 public class PedidoController {
 
     private final PedidoService service;
-    private final PedidoEventBusService pedidoEventBusService;
 
     // Inyección del servicio
-    public PedidoController(PedidoService service, PedidoEventBusService pedidoEventBusService) {
+    public PedidoController(PedidoService service) {
         this.service = service;
-        this.pedidoEventBusService = pedidoEventBusService;
     }
 
     // Crea pedido

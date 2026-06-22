@@ -10,7 +10,7 @@ import com.tienda.ropa.backend.repository.PedidoRepository;
 import com.tienda.ropa.backend.repository.ProductoRepository;
 import com.tienda.ropa.backend.repository.UsuarioRepository;
 import com.tienda.ropa.backend.service.PedidoService;
-import com.tienda.ropa.backend.service.reactive.PedidoEventBusService;
+import com.tienda.ropa.backend.service.reactive.PedidoReactiveService;
 import com.tienda.ropa.backend.web.advice.ConflictException;
 import com.tienda.ropa.backend.web.advice.NotFoundException;
 
@@ -27,19 +27,19 @@ public class PedidoServiceImpl implements PedidoService {
     private final PedidoRepository pedidoRepo;
     private final UsuarioRepository usuarioRepo;
     private final ProductoRepository productoRepo;
-        private final PedidoEventBusService pedidoEventBusService;
+    private final PedidoReactiveService pedidoReactiveService;
 
     // Inyección de dependencias
     public PedidoServiceImpl(
             PedidoRepository pedidoRepo,
             UsuarioRepository usuarioRepo,
-                        ProductoRepository productoRepo,
-                        PedidoEventBusService pedidoEventBusService
+            ProductoRepository productoRepo,
+            PedidoReactiveService pedidoReactiveService
     ) {
         this.pedidoRepo = pedidoRepo;
         this.usuarioRepo = usuarioRepo;
         this.productoRepo = productoRepo;
-                this.pedidoEventBusService = pedidoEventBusService;
+        this.pedidoReactiveService = pedidoReactiveService;
     }
 
     // Crea un pedido
@@ -110,7 +110,7 @@ public class PedidoServiceImpl implements PedidoService {
         pedido.setTotal(total);
 
         PedidoResponse response = toResponse(pedidoRepo.save(pedido));
-        pedidoEventBusService.publishPedido(response);
+        pedidoReactiveService.publishPedido(response);
         return response;
     }
 
@@ -165,7 +165,7 @@ public class PedidoServiceImpl implements PedidoService {
         pedido.setEstado(nuevoEstado.toUpperCase());
 
                 PedidoResponse response = toResponse(pedidoRepo.save(pedido));
-                pedidoEventBusService.publishPedido(response);
+        pedidoReactiveService.publishPedido(response);
                 return response;
     }
 
