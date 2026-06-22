@@ -62,7 +62,11 @@ public class PedidoController {
         String nuevoEstado = body.get("estado");
 
         return ResponseEntity.ok(
+<<<<<<< HEAD
             service.updateEstado(id, nuevoEstado)
+=======
+                service.updateEstado(id, nuevoEstado)
+>>>>>>> origin/main
         );
     }
 }

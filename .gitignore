@@ -17,3 +17,7 @@ fronted/.vite/
 .vscode/
 .DS_Store
 Thumbs.db
+
+# Ignorar archivos estáticos que se generan al compilar el frontend dentro del backend
+backend/src/main/resources/static/index.html
+backend/src/main/resources/static/assets/

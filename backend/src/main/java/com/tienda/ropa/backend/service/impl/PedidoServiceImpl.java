@@ -35,6 +35,7 @@ public class PedidoServiceImpl implements PedidoService {
             UsuarioRepository usuarioRepo,
             ProductoRepository productoRepo,
             PedidoReactiveService pedidoReactiveService
+
     ) {
         this.pedidoRepo = pedidoRepo;
         this.usuarioRepo = usuarioRepo;
@@ -109,9 +110,11 @@ public class PedidoServiceImpl implements PedidoService {
 
         pedido.setTotal(total);
 
+
         PedidoResponse response = toResponse(pedidoRepo.save(pedido));
         pedidoReactiveService.publishPedido(response);
         return response;
+
     }
 
     // Obtiene pedido por id
