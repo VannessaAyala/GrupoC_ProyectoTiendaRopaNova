@@ -10,6 +10,10 @@ import com.tienda.ropa.backend.repository.PedidoRepository;
 import com.tienda.ropa.backend.repository.ProductoRepository;
 import com.tienda.ropa.backend.repository.UsuarioRepository;
 import com.tienda.ropa.backend.service.PedidoService;
+<<<<<<< Updated upstream
+=======
+import com.tienda.ropa.backend.service.reactive.PedidoReactiveService;
+>>>>>>> Stashed changes
 import com.tienda.ropa.backend.web.advice.ConflictException;
 import com.tienda.ropa.backend.web.advice.NotFoundException;
 
@@ -36,6 +40,7 @@ public class PedidoServiceImpl implements PedidoService {
     private final PedidoRepository   pedidoRepo;
     private final UsuarioRepository  usuarioRepo;
     private final ProductoRepository productoRepo;
+<<<<<<< Updated upstream
 
     // Inyección de dependencias por constructor
     public PedidoServiceImpl(PedidoRepository pedidoRepo,
@@ -44,6 +49,21 @@ public class PedidoServiceImpl implements PedidoService {
         this.pedidoRepo   = pedidoRepo;
         this.usuarioRepo  = usuarioRepo;
         this.productoRepo = productoRepo;
+=======
+    private final PedidoReactiveService pedidoReactiveService;
+
+    // Inyección de dependencias
+    public PedidoServiceImpl(
+            PedidoRepository pedidoRepo,
+            UsuarioRepository usuarioRepo,
+            ProductoRepository productoRepo,
+            PedidoReactiveService pedidoReactiveService
+    ) {
+        this.pedidoRepo = pedidoRepo;
+        this.usuarioRepo = usuarioRepo;
+        this.productoRepo = productoRepo;
+        this.pedidoReactiveService = pedidoReactiveService;
+>>>>>>> Stashed changes
     }
 
     // ── Crear un pedido ───────────────────────────────────────────────────────
@@ -108,7 +128,14 @@ public class PedidoServiceImpl implements PedidoService {
         }
 
         pedido.setTotal(total);
+<<<<<<< Updated upstream
         return toResponse(pedidoRepo.save(pedido));
+=======
+
+        PedidoResponse response = toResponse(pedidoRepo.save(pedido));
+        pedidoReactiveService.publishPedido(response);
+        return response;
+>>>>>>> Stashed changes
     }
 
     // ── Obtener pedido por ID ─────────────────────────────────────────────────
@@ -151,7 +178,14 @@ public class PedidoServiceImpl implements PedidoService {
                         "Pedido no encontrado con id: " + id));
 
         pedido.setEstado(nuevoEstado.toUpperCase());
+<<<<<<< Updated upstream
         return toResponse(pedidoRepo.save(pedido));
+=======
+
+                PedidoResponse response = toResponse(pedidoRepo.save(pedido));
+        pedidoReactiveService.publishPedido(response);
+                return response;
+>>>>>>> Stashed changes
     }
 
     // ── Mapeo Entidad -> DTO de salida ────────────────────────────────────────

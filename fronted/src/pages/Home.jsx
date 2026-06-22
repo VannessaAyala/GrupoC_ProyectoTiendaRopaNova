@@ -1,114 +1,250 @@
 import React, { useEffect, useState } from 'react';
-import { api } from '../services/api';
+import { useNavigate } from 'react-router-dom';
+import { api, fmt } from '../services/api';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { useToast } from '../context/ToastContext';
 
 export default function Home() {
-  const [productos, setProductos] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const { addToCart } = useCart();
-  const { isLoggedIn, isAdmin } = useAuth();
-  const navigate = useNavigate();
+    const [productos, setProductos] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [search, setSearch] = useState('');
+    const [added, setAdded] = useState({});
 
-  useEffect(() => {
-    if (isLoggedIn && isAdmin) {
-      navigate('/admin/productos', { replace: true });
-      return;
-    }
-    api.productos.getAll()
-      .then(setProductos)
-      .catch(console.error)
-      .finally(() => setLoading(false));
-  }, [isLoggedIn, isAdmin, navigate]);
+    const { addToCart } = useCart();
+    const { isLoggedIn, isAdmin } = useAuth();
+    const { toast } = useToast();
+    const navigate = useNavigate();
 
-  const handleAddToCart = (producto) => {
-    if (!isLoggedIn) {
-      alert('Debes iniciar sesión para agregar productos al carrito');
-      navigate('/login');
-      return;
-    }
-    addToCart(producto);
-  };
+    const getEmoji = (categoria) => {
+        switch (categoria?.toLowerCase()) {
+            case 'camisas':
+                return '👕';
+            case 'pantalones':
+                return '👖';
+            case 'zapatos':
+                return '👟';
+            case 'gorras':
+                return '🧢';
+            case 'vestidos':
+                return '👗';
+            case 'accesorios':
+                return '👜';
+            default:
+                return '👕';
+        }
+    };
 
-  return (
-    <div>
-      {/* HERO / PORTADA */}
-      <div style={{
-        background: 'linear-gradient(135deg, #0f172a 0%, #334155 100%)',
-        color: 'white',
-        padding: '6rem 2rem',
-        textAlign: 'center',
-        position: 'relative',
-        overflow: 'hidden'
-      }}>
-        <div style={{ position: 'relative', zIndex: 1, maxWidth: '800px', margin: '0 auto' }}>
-          <p style={{ textTransform: 'uppercase', letterSpacing: '4px', fontSize: '0.875rem', marginBottom: '1rem', opacity: 0.7 }}>
-            Nueva Temporada 2026
-          </p>
-          <h1 style={{ fontSize: '3.5rem', fontWeight: 800, marginBottom: '1.5rem', lineHeight: 1.1 }}>
-            Estilo que Define<br />tu Personalidad
-          </h1>
-          <p style={{ fontSize: '1.125rem', opacity: 0.8, marginBottom: '2rem', maxWidth: '500px', margin: '0 auto 2rem' }}>
-            Descubre nuestra colección exclusiva de ropa con las últimas tendencias de moda.
-          </p>
-          <a href="#catalogo" style={{
-            background: 'white', color: '#0f172a', padding: '1rem 2.5rem', borderRadius: '6px',
-            textDecoration: 'none', fontWeight: 700, fontSize: '1rem', display: 'inline-block'
-          }}>
-            Ver Catálogo ↓
-          </a>
-        </div>
-        {/* Decoración */}
-        <div style={{
-          position: 'absolute', top: '-50%', right: '-10%', width: '500px', height: '500px',
-          borderRadius: '50%', background: 'rgba(255,255,255,0.03)'
-        }} />
-        <div style={{
-          position: 'absolute', bottom: '-30%', left: '-5%', width: '300px', height: '300px',
-          borderRadius: '50%', background: 'rgba(255,255,255,0.05)'
-        }} />
-      </div>
+    useEffect(() => {
+        if (isLoggedIn && isAdmin) {
+            navigate('/admin/productos', { replace: true });
+            return;
+        }
 
-      {/* CATÁLOGO DE PRODUCTOS */}
-      <div id="catalogo" className="container" style={{ paddingTop: '3rem' }}>
-        <div className="page-header" style={{ marginBottom: '2rem' }}>
-          <div>
-            <h2>Nuestros Productos</h2>
-          </div>
-        </div>
+        api.productos.getAll()
+            .then(setProductos)
+            .catch(() => toast('Error cargando productos', 'error'))
+            .finally(() => setLoading(false));
+    }, [isAdmin]);
 
-        {loading ? (
-          <p>Cargando productos...</p>
-        ) : (
-          <div className="products-grid">
-            {productos.filter(p => p.active).map(producto => (
-              <div key={producto.id} className="product-card">
-                <div className="product-image">
-                  👕
+    const handleAdd = (product) => {
+        if (!isLoggedIn) {
+            toast('Inicia sesión para agregar al carrito');
+            navigate('/login');
+            return;
+        }
+
+        addToCart(product);
+        setAdded(a => ({ ...a, [product.id]: true }));
+        toast(`"${product.nombre}" añadido al carrito`, 'success');
+
+        setTimeout(() => {
+            setAdded(a => ({ ...a, [product.id]: false }));
+        }, 1500);
+    };
+
+    const activos = productos
+        .filter(p => p.active)
+        .filter(
+            p =>
+                !search ||
+                p.nombre.toLowerCase().includes(search.toLowerCase())
+        );
+
+    return (
+        <>
+            {/* ── HERO ─────────────────────────────────────────────────── */}
+            <div className="hero">
+                <div className="hero-inner">
+                    <p className="hero-eyebrow">Colección 2026</p>
+
+                    <h1>
+                        Moda que habla
+                        <br />
+                        <em>por ti</em>
+                    </h1>
+
+                    <p>
+                        Descubre prendas pensadas para cada momento.
+                        Calidad, estilo y autenticidad en cada hilo.
+                    </p>
+
+                    <div className="hero-cta">
+                        <a
+                            href="#catalogo"
+                            className="btn btn-accent btn-lg"
+                        >
+                            Ver Catálogo
+                        </a>
+
+                        {!isLoggedIn && (
+                            <button
+                                className="btn btn-outline btn-lg"
+                                style={{
+                                    color: 'var(--cream)',
+                                    borderColor:
+                                        'rgba(245,240,232,0.2)'
+                                }}
+                                onClick={() => navigate('/login')}
+                            >
+                                Iniciar Sesión
+                            </button>
+                        )}
+                    </div>
+
+                    <div className="hero-stats">
+                        <div>
+                            <div className="hero-stat-num">
+                                {productos.filter(p => p.active).length}+
+                            </div>
+                            <div className="hero-stat-label">
+                                Productos
+                            </div>
+                        </div>
+
+                        <div>
+                            <div className="hero-stat-num">100%</div>
+                            <div className="hero-stat-label">
+                                Calidad garantizada
+                            </div>
+                        </div>
+
+                        <div>
+                            <div className="hero-stat-num">24h</div>
+                            <div className="hero-stat-label">
+                                Despacho rápido
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div className="product-info">
-                  <span style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '1px', color: 'var(--text-muted)', fontWeight: 600 }}>
-                    {producto.categoria}
-                  </span>
-                  <h3>{producto.nombre}</h3>
-                  <div className="price" style={{ marginTop: 'auto' }}>${parseFloat(producto.precio).toFixed(2)}</div>
-                  <button
-                    className="btn"
-                    style={{ width: '100%', marginTop: '0.5rem' }}
-                    onClick={() => handleAddToCart(producto)}
-                  >
-                    Añadir al Carrito
-                  </button>
+            </div>
+
+            {/* ── CATÁLOGO ─────────────────────────────────────────────── */}
+            <div id="catalogo" className="container page-wrapper">
+                <div className="section-title">
+                    <h2>Catálogo</h2>
+                    <div className="section-line" />
+                    <span className="section-count">
+                        {activos.length} productos
+                    </span>
                 </div>
-              </div>
-            ))}
-            {productos.filter(p => p.active).length === 0 && (
-              <p style={{ gridColumn: '1/-1', textAlign: 'center', padding: '2rem' }}>No hay productos disponibles por el momento.</p>
-            )}
-          </div>
-        )}
-      </div>
-    </div>
-  );
+
+                {/* Búsqueda */}
+                <div
+                    style={{
+                        marginBottom: '2rem',
+                        maxWidth: '400px'
+                    }}
+                >
+                    <input
+                        className="form-control"
+                        placeholder="Buscar producto..."
+                        value={search}
+                        onChange={e => setSearch(e.target.value)}
+                    />
+                </div>
+
+                {loading ? (
+                    <div className="loading-center">
+                        <div className="loading-ring" />
+                    </div>
+                ) : activos.length === 0 ? (
+                    <div className="empty-state">
+                        <div className="empty-icon">🔍</div>
+                        <h3>Sin resultados</h3>
+                        <p>
+                            No encontramos productos con ese nombre.
+                        </p>
+                    </div>
+                ) : (
+                    <div className="products-grid">
+                        {activos.map(p => (
+                            <article
+                                key={p.id}
+                                className="product-card"
+                            >
+                                <div className="product-img">
+                                    <div
+                                        style={{
+                                            fontSize: '5rem',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            height: '100%'
+                                        }}
+                                    >
+                                        {getEmoji(p.categoria)}
+                                    </div>
+
+                                    <span className="product-tag">
+                                        {p.categoria}
+                                    </span>
+                                </div>
+
+                                <div className="product-body">
+                                    <div className="product-cat">
+                                        {p.categoria}
+                                    </div>
+
+                                    <div className="product-name">
+                                        {p.nombre}
+                                    </div>
+
+                                    {p.stock <= 5 &&
+                                        p.stock > 0 && (
+                                            <div className="stock-low">
+                                                Solo {p.stock} en stock
+                                            </div>
+                                        )}
+
+                                    <div className="product-price">
+                                        {fmt.price(p.precio)}
+                                        <small>USD</small>
+                                    </div>
+
+                                    <button
+                                        className={`btn btn-full ${
+                                            added[p.id]
+                                                ? 'btn-success'
+                                                : 'btn-accent'
+                                        }`}
+                                        onClick={() =>
+                                            handleAdd(p)
+                                        }
+                                        disabled={p.stock === 0}
+                                    >
+                                        {p.stock === 0
+                                            ? 'Sin stock'
+                                            : added[p.id]
+                                                ? '✓ Agregado'
+                                                : 'Añadir al carrito'}
+                                    </button>
+                                </div>
+                            </article>
+                        ))}
+                    </div>
+                )}
+            </div>
+        </>
+    );
 }

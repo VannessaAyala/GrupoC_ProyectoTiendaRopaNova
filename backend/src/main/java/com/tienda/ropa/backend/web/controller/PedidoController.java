@@ -25,7 +25,11 @@ public class PedidoController {
 
     private final PedidoService service;
 
+<<<<<<< Updated upstream
     // Inyección por constructor
+=======
+    // Inyección del servicio
+>>>>>>> Stashed changes
     public PedidoController(PedidoService service) {
         this.service = service;
     }
